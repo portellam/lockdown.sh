@@ -1,58 +1,135 @@
 <img align="left" width="100" height="100" src="/logo.png"/>
 
 # lockdown.sh
-<br/>
-<br/>
+### v1.0.0
+*Lockdown.sh* is a single-file zero-config shell script to be run to lockdown a
+newly installed Linux OS. *Lockdown.sh* aims to set a sensible baseline which
+can be built upon for specific needs.
 
-Lockdown.sh is a single file zero config shell script to be run to lockdown a newly installed linux os. Lockdown.sh aims to set a sensible baseline which can be built upon for specific needs.
+## [Download](#5-download)
 
+## Table of Contents
+- [1. Why?](#1-why)
+- [2. Warning](#2-warning)
+- [3. Supported Operating Systems](#3-supported-operating-systems)
+- [4. Download](#4-download)
+- [5. Usage](#5-usage)
+- [6. Features](#6-features)
+    - [6.1. Additions](#61-additions)
+    - [6.2. Installed Packages](#62-installed-packages)
+    - [6.3. Removals](#63-removals)
+    - [6.4. Access Restrictions](#64-access-restrictions)
+- [7. Contact](#7-contact)
+- [8. References](#8-references)
+
+### 1. Why?
 - Zero Config
 - Zero Install
 - Single file shell script
 
-## WARNING
-This script changes the ssh port to `141`. And restricts ssh to key only for the created admin user if an admin user is created.
+### 2. Warning
+This script changes the ssh port to `141`, and restricts ssh to key only for the
+created admin user if an admin user is created.
 
-## Usage
-Download and run the script as root, select which sections to run when prompted.
+### 3. Supported Operating Systems
+- Debian 8 Jessie
+- Debian 10 Buster
+
+**!** Debian-based operating systems should be supported:
+  Ubuntu, Linux Mint, and Pop! OS.
+
+### 4. Download
+- Download the Latest Release:&ensp;[Codeberg][codeberg-releases],
+[GitHub][github-releases]
+
+- Download the script file:
+    - `wget https://raw.githubusercontent.com/x08d/lockdown.sh/master/lockdown.sh`
+
+- Download the `.zip` file:
+    1. Viewing from the top of the repository's (current) webpage, click the
+        drop-down icon:
+        - `···` on Codeberg.
+        - `<> Code ` on GitHub.
+    2. Click `Download ZIP` and save.
+    3. Open the `.zip` file, then extract its contents.
+
+- Clone the repository:
+    1. Open a Command Line Interface (CLI).
+        - Open a console emulator (for Debian systems: Konsole).
+        - Open a existing console: press `CTRL` + `ALT` + `F2`, `F3`, `F4`, `F5`,  or
+        `F6`.
+            - **To return to the desktop,** press `CTRL` + `ALT` + `F7`.
+            - `F1` is reserved for debug output of the Linux kernel.
+            - `F7` is reserved for video output of the desktop environment.
+            - `F8` and above are unused.
+    2. Change your directory to your home folder or anywhere safe:
+        - `cd ~`
+    3. Clone the repository:
+        - `git clone https://www.codeberg.org/portellam/lockdown.sh`
+        - `git clone https://www.github.com/portellam/lockdown.sh`
+
+[codeberg-releases]: https://codeberg.org/portellam/lockdown.sh/releases/latest
+[github-releases]:   https://github.com/portellam/lockdown.sh/releases/latest
+
+### 5. Usage
+Run the script as root, and select which sections to run when prompted.
+
 ```bash
-wget https://raw.githubusercontent.com/x08d/lockdown.sh/master/lockdown.sh
 chmod +x ./lockdown.sh
 ./lockdown.sh
 ```
 
-## What does it do?
-- Updates packages
-- Restricts firewall to only allow ssh on `141`
-- Installs [fail2ban](https://www.fail2ban.org)
-- Configures the kernel
-- Adds daily cronjob to update packages on server
-- Installs and configures [auditd](https://linux.die.net/man/8/auditd) with sensible rules
-- Disables core dumps
-- Restricts logins
-- Create a new admin user
-- Restricts ssh and enables only the created admin user
-- Adds a legal banner to /etc/issue and /etc/issue.net
-- Installs packages recommended by [lynis](https://github.com/CISOfy/lynis)
-- Installs and sets up [aide](https://github.com/aide/aide)
+### 6. Features
+#### 6.1. Additions
+- Adds daily cronjob to update packages on server.
+- Adds a legal banner to `/etc/issue` and `/etc/issue.net`.
+- Configures the kernel.
+- Moves `tmp` to `tmpfs`.
+- Remounts `/tmp`, `/proc`, `/dev`, and `/run` to be more restrictive.
+- Updates packages.
+
+#### 6.2. Installed Packages
 - Enables process accounting
-- Disables uncommon filesystems
-- Disables firewire and usb storage
-- Disables uncommon network protocols
-- Restricts access to /root 
-- Restrict access to compilers
-- Moves tmp to tmpfs
-- Remounts /tmp /proc /dev /run to be more restrictive
-- Purges old and removed packages
+- Installs and configures [auditd](#2) with sensible rules.
+- Installs and sets up [aide](#1).
+- Installs [fail2ban](#3).
+- Installs packages recommended by [lynis](#4).
 
-## Supported OS
-- Debian 10
-- Debian 8
-- (Should work with most debian and debian based OS's)
-- Others are coming soon
+#### 6.3. Removals
+- Disables core dumps.
+- Disables uncommon filesystems.
+- Disables firewire and usb storage.
+- Disables uncommon network protocols.
+- Purges old and removed packages.
 
-## Contributing
-Please open pull requests and issues on github for anything you find.
+#### 6.4. Access Restrictions
+- Create a new admin user.
+- Restricts access to `/root`.
+- Restrict access to compilers.
+- Restricts firewall to only allow ssh on `141`.
+- Restricts logins.
+- Restricts ssh and enables only the created admin user.
 
-## References
-- https://github.com/CISOfy/lynis 
+### 7. Contact
+Did you encounter a bug? Do you need help? Please visit the **Issues page**
+([Codeberg][codeberg-issues], [GitHub][github-issues]).
+
+[codeberg-issues]: https://codeberg.org/portellam/lockdown.sh/issues
+[github-issues]:   https://github.com/portellam/lockdown.sh/issues
+
+### 8. References
+#### 1.
+**aide/aide**. GitHub. Accessed July 2, 2024.
+<sup>https://github.com/aide/aide.</sup>
+
+#### 2.
+**auditd(8): Audit Daemon**. Linux man page. Accessed July 2, 2024.
+<sup>https://linux.die.net/man/8/auditd.</sup>
+
+#### 3.
+**fail2ban**. fail2ban. Accessed July 2, 2024.
+<sup>https://www.fail2ban.org.</sup>
+
+#### 4.
+**CISOfy/lynis**. GitHub. Accessed July 2, 2024.
+<sup>https://github.com/CISOfy/lynis.</sup>
