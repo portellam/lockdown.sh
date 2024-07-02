@@ -2,7 +2,7 @@
 
 #
 # Filename:       lockdown.sh
-# Version:        1.0.0
+# Version:        1.0.1
 # Description:    Lockdown your Linux install. The simple zero-config Linux
 #                 hardening script.
 # Author(s):      Dom Ginger <github.com/dolegi>
