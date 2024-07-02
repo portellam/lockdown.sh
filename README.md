@@ -43,7 +43,8 @@ the created admin user if an admin user is created.
 [GitHub][github-releases]
 
 - Download the script file:
-    - `wget https://raw.githubusercontent.com/x08d/lockdown.sh/master/lockdown.sh`
+    - `wget https://www.codeberg.org/portellam/lockdown.sh/master/lockdown.sh`
+    - `wget https://www.github.com/portellam/lockdown.sh/master/lockdown.sh`
 
 - Download the `.zip` file:
     1. Viewing from the top of the repository's (current) webpage, click the
