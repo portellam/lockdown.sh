@@ -4,7 +4,7 @@
 # lockdown.sh
 ### v1.0.0 | [Download](#4-download)
 `lockdown.sh` is a single-file zero-config shell script to be run to lockdown a
-newly installed Linux OS. `Lockdown.sh` aims to set a sensible baseline which
+newly installed Linux OS. `lockdown.sh` aims to set a sensible baseline which
 can be built upon for specific needs.
 
 ## Table of Contents
