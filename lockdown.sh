@@ -9,6 +9,14 @@
 # Maintainer(s):  Alex Portell <github.com/portellam>
 #
 
+#
+# TODO:
+# - [ ] refactor all functions.
+#   - [ ] add comments.
+#   - [ ] adhere to 80/24 rule.
+# - [ ] organize functions.
+#
+
 function apt_update
 {
   # Update package list
@@ -99,37 +107,39 @@ function install_fail2ban
 function configure_kernel
 {
   # Configure Kernel
-  echo "net.ipv4.tcp_syncookies: 1
-net.ipv4.conf.all.accept_source_route: 0
-net.ipv6.conf.all.accept_source_route: 0
-net.ipv4.conf.default.accept_source_route: 0
-net.ipv6.conf.default.accept_source_route: 0
-net.ipv4.conf.all.accept_redirects: 0
-net.ipv6.conf.all.accept_redirects: 0
-net.ipv4.conf.default.accept_redirects: 0
-net.ipv6.conf.default.accept_redirects: 0
-net.ipv4.conf.all.secure_redirects: 1
-net.ipv4.conf.default.secure_redirects: 1
-net.ipv4.ip_forward: 0
-net.ipv6.conf.all.forwarding: 0
-net.ipv4.conf.all.send_redirects: 0
-net.ipv4.conf.default.send_redirects: 0
-net.ipv4.conf.all.rp_filter: 1
-net.ipv4.conf.default.rp_filter: 1
-net.ipv4.icmp_echo_ignore_broadcasts: 1
-net.ipv4.icmp_ignore_bogus_error_responses: 1
-net.ipv4.icmp_echo_ignore_all: 0
-net.ipv4.conf.all.log_martians: 1
-net.ipv4.conf.default.log_martians: 1
-net.ipv4.tcp_rfc1337: 1
-kernel.randomize_va_space: 2
-fs.protected_hardlinks: 1
-fs.protected_symlinks: 1
-kernel.perf_event_paranoid: 2
-kernel.core_uses_pid: 1
-kernel.kptr_restrict: 2
-kernel.sysrq: 0
-kernel.yama.ptrace_scope: 1" > /etc/sysctl.d/80-lockdown.conf
+  echo \
+    "net.ipv4.tcp_syncookies: 1"\
+    "net.ipv4.conf.all.accept_source_route: 0"\
+    "net.ipv6.conf.all.accept_source_route: 0"\
+    "net.ipv4.conf.default.accept_source_route: 0"\
+    "net.ipv6.conf.default.accept_source_route: 0"\
+    "net.ipv4.conf.all.accept_redirects: 0"\
+    "net.ipv6.conf.all.accept_redirects: 0"\
+    "net.ipv4.conf.default.accept_redirects: 0"\
+    "net.ipv6.conf.default.accept_redirects: 0"\
+    "net.ipv4.conf.all.secure_redirects: 1"\
+    "net.ipv4.conf.default.secure_redirects: 1"\
+    "net.ipv4.ip_forward: 0"\
+    "net.ipv6.conf.all.forwarding: 0"\
+    "net.ipv4.conf.all.send_redirects: 0"\
+    "net.ipv4.conf.default.send_redirects: 0"\
+    "net.ipv4.conf.all.rp_filter: 1"\
+    "net.ipv4.conf.default.rp_filter: 1"\
+    "net.ipv4.icmp_echo_ignore_broadcasts: 1"\
+    "net.ipv4.icmp_ignore_bogus_error_responses: 1"\
+    "net.ipv4.icmp_echo_ignore_all: 0"\
+    "net.ipv4.conf.all.log_martians: 1"\
+    "net.ipv4.conf.default.log_martians: 1"\
+    "net.ipv4.tcp_rfc1337: 1"\
+    "kernel.randomize_va_space: 2"\
+    "fs.protected_hardlinks: 1"\
+    "fs.protected_symlinks: 1"\
+    "kernel.perf_event_paranoid: 2"\
+    "kernel.core_uses_pid: 1"\
+    "kernel.kptr_restrict: 2"\
+    "kernel.sysrq: 0"\
+    "kernel.yama.ptrace_scope: 1" > /etc/sysctl.d/80-lockdown.conf
+
   sysctl --system
 }
 
@@ -422,38 +432,91 @@ function purge_old_packages
   apt purge "$(dpkg -l | grep '^rc' | awk '{print $2}')" -y
 }
 
-function run
-{
-  typeset -f "$1" | tail -n +2
-  echo "$2"
-  echo "Run the above commands? [y/N]"
-  read -r answer
-  if [ "$answer" != "${answer#[Yy]}" ] ;then
-    $1
-  fi
-}
+#
+# DESC:   Prompt the user to execute the command.
+# $1:     the command name as a string.
+# $2:     the prompt as a string.
+# RETURN: If the prompt is answered and the command passes, return 0.
+#         If the command fails, return 1.
+#         If the prompt is not answered, return 255.
+#
+  function run
+  {
+    local -r str_command="${1}"
+    local -r str_prompt="${2}"
 
-run apt_update "Update and upgrade all packages"
-run configure_iptables "Configure iptables"
-run install_fail2ban "Install fail2ban"
-run configure_kernel "Configure kernel"
-run automatic_updates "Setup automatic updates"
-run configure_auditd "Setup auditd"
-run disable_core_dumps "Disable core dumps"
-run restrict_login "Restrict login"
-run secure_ssh "Secure ssh"
-run create_admin_user "Create admin user"
-run add_legal_banner "Add legal banner"
-run install_recommended_packages "Install recommended packages"
-run setup_aide "Setup aide"
-run enable_process_accounting "Enable process accounting"
-run disable_uncommon_filesystems "Disable unused filesystems"
-run disable_firewire "Disable firewire"
-run disable_usb "Disable usb"
-run disable_uncommon_protocols "Disable uncommon protocols"
-run change_root_permissions "Change root dir permissions"
-run restrict_access_to_compilers "Restrict access to compilers"
-run move_tmp_to_tmpfs "Move tmp to tmpfs"
-run remount_dir_with_restrictions "Remount /tmp /proc /dev /run to be more restrictive"
-run purge_old_packages "Purge old packages"
-run reboot "Reboot"
+    typeset -f "${str_command}" | tail --lines +2
+
+    echo -e "${str_prompt}"
+    echo -en "$0: Run the above command(s)? [Y/n]: "
+
+    read -r str_answer
+
+    if [ "${str_answer}" != "${answer#[Yy]}" ] ;then
+      echo "$0: Skipped command(s)."
+      return 255
+    fi
+
+    if ! ${str_command}; then
+      echo "$0: Failure."
+      return 1
+    fi
+
+    echo "$0: Success."
+    return 0
+  }
+
+#
+# DESC:   main
+# RETURN: If all prompted commands pass, return 0.
+#         If one or more command(s) fail, return 1.
+#
+  function main
+  {
+    local -Ar dict_command_prompts=(
+      ["apt_update"]="Update and upgrade all packages"
+      ["configure_iptables"]="Configure iptables"
+      ["install_fail2ban"]="Install fail2ban"
+      ["configure_kernel"]="Configure kernel"
+      ["automatic_updates"]="Setup automatic updates"
+      ["configure_auditd"]="Setup auditd"
+      ["disable_core_dumps"]="Disable core dumps"
+      ["restrict_login"]="Restrict login"
+      ["secure_ssh"]="Secure ssh"
+      ["create_admin_user"]="Create admin user"
+      ["add_legal_banner"]="Add legal banner"
+      ["install_recommended_packages"]="Install recommended packages"
+      ["setup_aide"]="Setup aide"
+      ["enable_process_accounting"]="Enable process accounting"
+      ["disable_uncommon_filesystems"]="Disable unused filesystems"
+      ["disable_firewire"]="Disable firewire"
+      ["disable_usb"]="Disable usb"
+      ["disable_uncommon_protocols"]="Disable uncommon protocols"
+      ["change_root_permissions"]="Change root dir permissions"
+      ["restrict_access_to_compilers"]="Restrict access to compilers"
+      ["move_tmp_to_tmpfs"]="Move tmp to tmpfs"
+
+      ["remount_dir_with_restrictions"]="Remount /tmp /proc /dev /run to be more "\
+        "restrictive"
+
+      ["purge_old_packages"]="Purge old packages"
+      ["reboot"]="Reboot"
+    )
+
+    for str_key in "${!dict_command_prompts[@]}"; do
+      local value="${dict_command_prompts["${str_key}"]}"
+
+      run "${str_key}" "${str_value}"
+
+      if [[ "${?}" -eq 1 ]]; then
+        echo "$0: Script has failed."
+        return 1
+      fi
+    done
+
+    echo "$0: Script finished successfully."
+    return 0
+  }
+
+main
+exit "${?}"
