@@ -2,12 +2,10 @@
 <br>
 
 # lockdown.sh
-### v1.0.0
+### v1.0.0 | [Download](#4-download)
 *Lockdown.sh* is a single-file zero-config shell script to be run to lockdown a
 newly installed Linux OS. *Lockdown.sh* aims to set a sensible baseline which
 can be built upon for specific needs.
-
-## [Download](#5-download)
 
 ## Table of Contents
 - [1. Why?](#1-why)
@@ -23,10 +21,11 @@ can be built upon for specific needs.
 - [7. Contact](#7-contact)
 - [8. References](#8-references)
 
-### 1. Why?
-- Zero Config
-- Zero Install
-- Single file shell script
+## Contents
+### <u>1. Why?</u>
+1. Zero Config
+2. Zero Install
+3. Single file shell script
 
 ### 2. Warning
 This script changes the ssh port to `141`, and restricts ssh to key only for the
@@ -121,16 +120,16 @@ Did you encounter a bug? Do you need help? Please visit the **Issues page**
 ### 8. References
 #### 1.
 **aide/aide**. GitHub. Accessed July 2, 2024.
-<sup>https://github.com/aide/aide.</sup>
+https://github.com/aide/aide.
 
 #### 2.
 **auditd(8): Audit Daemon**. Linux man page. Accessed July 2, 2024.
-<sup>https://linux.die.net/man/8/auditd.</sup>
+https://linux.die.net/man/8/auditd.
 
 #### 3.
 **fail2ban**. fail2ban. Accessed July 2, 2024.
-<sup>https://www.fail2ban.org.</sup>
+https://www.fail2ban.org.
 
 #### 4.
 **CISOfy/lynis**. GitHub. Accessed July 2, 2024.
-<sup>https://github.com/CISOfy/lynis.</sup>
+https://github.com/CISOfy/lynis.
