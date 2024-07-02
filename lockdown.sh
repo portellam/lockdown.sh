@@ -9,18 +9,20 @@
 # Maintainer(s):  Alex Portell <github.com/portellam>
 #
 
-apt_update() {
+function apt_update
+{
   # Update package list
   apt update
 
   # Apt upgrade packages
   apt upgrade -y
 
-  # Apt full upgrade 
+  # Apt full upgrade
   apt full-upgrade -y
 }
 
-configure_iptables() {
+function configure_iptables
+{
   # iptables
   apt install iptables-persistent -y
 
@@ -88,12 +90,14 @@ configure_iptables() {
   ip6tables-save > /etc/iptables/rules.v6
 }
 
-install_fail2ban() {
+function install_fail2ban
+{
   # Install fail2ban
   apt install fail2ban -y
 }
 
-configure_kernel() {
+function configure_kernel
+{
   # Configure Kernel
   echo "net.ipv4.tcp_syncookies: 1
 net.ipv4.conf.all.accept_source_route: 0
@@ -129,13 +133,15 @@ kernel.yama.ptrace_scope: 1" > /etc/sysctl.d/80-lockdown.conf
   sysctl --system
 }
 
-automatic_updates() {
+function automatic_updates
+{
   # Enable automatic updates
   apt install unattended-upgrades -y
   dpkg-reconfigure -plow unattended-upgrades
 }
 
-configure_auditd() {
+function configure_auditd
+{
   # Install auditd
   apt install auditd -y
 
@@ -255,7 +261,8 @@ configure_auditd() {
   service auditd restart
 }
 
-disable_core_dumps() {
+function disable_core_dumps
+{
   # Disable core dumps
   echo "* hard core 0" >> /etc/security/limits.conf
   echo "ProcessSizeMax=0
@@ -263,7 +270,8 @@ disable_core_dumps() {
   echo "ulimit -c 0" >> /etc/profile
 }
 
-restrict_login() {
+function restrict_login
+{
   # Set login.defs
   sed -i s/UMASK.*/UMASK\ 027/ /etc/login.defs
   sed -i s/PASS_MAX_DAYS.*/PASS_MAX_DAYS\ 90/ /etc/login.defs
@@ -272,7 +280,8 @@ restrict_login() {
 SHA_CRYPT_MAX_ROUNDS 100000000" >> /etc/login.defs
 }
 
-secure_ssh() {
+function secure_ssh
+{
   # Secure ssh
   echo "
 ClientAliveCountMax 2
@@ -290,7 +299,8 @@ PasswordAuthentication no
   sed -i s/^UsePAM.*/UsePAM\ no/ /etc/ssh/sshd_config
 }
 
-create_admin_user() {
+function create_admin_user
+{
   # Create admin user
   echo "Enter admin username"; read -r username
   adduser "$username"
@@ -306,7 +316,8 @@ PermitRootLogin no
 " >> /etc/ssh/sshd_config
 }
 
-add_legal_banner() {
+function add_legal_banner
+{
   # Add legal banner
   echo "
 Unauthorized access to this server is prohibited.
@@ -318,24 +329,28 @@ Legal action will be taken. Disconnect now.
 " > /etc/issue.net
 }
 
-install_recommended_packages() {
+function install_recommended_packages
+{
   # Install recommended packages
   apt install apt-listbugs apt-listchanges needrestart debsecan debsums libpam-cracklib aide usbguard acct -y
 }
 
-setup_aide() {
+function setup_aide
+{
   # Setup aide
   aideinit
   mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
 }
 
-enable_process_accounting() {
+function enable_process_accounting
+{
   # Enable process accounting
   systemctl enable acct.service
   systemctl start acct.service
 }
 
-disable_uncommon_filesystems() {
+function disable_uncommon_filesystems
+{
   # Disable uncommon filesystems
   echo "install cramfs /bin/true
 install freevxfs /bin/true
@@ -345,41 +360,48 @@ install jffs2 /bin/true
 install squashfs /bin/true" >> /etc/modprobe.d/filesystems.conf
 }
 
-disable_firewire() {
+function disable_firewire
+{
   echo "install udf /bin/true
 blacklist firewire-core
 blacklist firewire-ohci
 blacklist firewire-sbp2" >> /etc/modprobe.d/blacklist.conf
 }
 
-disable_usb() {
+function disable_usb
+{
   echo "blacklist usb-storage" >> /etc/modprobe.d/blacklist.conf
 }
 
-disable_uncommon_protocols() {
+function disable_uncommon_protocols
+{
   echo "install sctp /bin/true
 install dccp /bin/true
 install rds /bin/true
 install tipc /bin/true" >> /etc/modprobe.d/protocols.conf
 }
 
-change_root_permissions() {
+function change_root_permissions
+{
  # Change /root permissions
   chmod 700 /root
   chmod 750 /home/debian
 }
 
-restrict_access_to_compilers() {
+function restrict_access_to_compilers
+{
   # Restrict access to compilers
   chmod o-rx /usr/bin/as
 }
 
-move_tmp_to_tmpfs() {
+function move_tmp_to_tmpfs
+{
   # Move tmp to tmpfs
   echo "tmpfs /tmp tmpfs rw,nosuid,nodev" >> /etc/fstab
 }
 
-remount_dir_with_restrictions() {
+function remount_dir_with_restrictions
+{
   # Mount tmp with noexec
   mount -o remount,noexec /tmp
 
@@ -393,13 +415,15 @@ remount_dir_with_restrictions() {
   mount -o remount,nodev /run
 }
 
-purge_old_packages() {
+function purge_old_packages
+{
   # Purge old/removed packages
   apt autoremove -y
   apt purge "$(dpkg -l | grep '^rc' | awk '{print $2}')" -y
 }
 
-run() {
+function run
+{
   typeset -f "$1" | tail -n +2
   echo "$2"
   echo "Run the above commands? [y/N]"
