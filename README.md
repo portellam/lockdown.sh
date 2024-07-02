@@ -3,8 +3,8 @@
 
 # lockdown.sh
 ### v1.0.0 | [Download](#4-download)
-*Lockdown.sh* is a single-file zero-config shell script to be run to lockdown a
-newly installed Linux OS. *Lockdown.sh* aims to set a sensible baseline which
+`lockdown.sh` is a single-file zero-config shell script to be run to lockdown a
+newly installed Linux OS. `Lockdown.sh` aims to set a sensible baseline which
 can be built upon for specific needs.
 
 ## Table of Contents
@@ -22,14 +22,14 @@ can be built upon for specific needs.
 - [8. References](#8-references)
 
 ## Contents
-### <u>1. Why?</u>
-1. Zero Config
-2. Zero Install
-3. Single file shell script
+### 1. Why?
+1. **Zero** Config
+2. **Zero** Install
+3. **Single file** shell script
 
 ### 2. Warning
-This script changes the ssh port to `141`, and restricts ssh to key only for the
-created admin user if an admin user is created.
+`Lockdown.sh` changes the ssh port to `141`, and restricts ssh to key only for
+the created admin user if an admin user is created.
 
 ### 3. Supported Operating Systems
 - Debian 8 Jessie
@@ -72,7 +72,7 @@ created admin user if an admin user is created.
 [github-releases]:   https://github.com/portellam/lockdown.sh/releases/latest
 
 ### 5. Usage
-Run the script as root, and select which sections to run when prompted.
+Run `lockdown.sh` as root, and select which sections to run when prompted.
 
 ```bash
 chmod +x ./lockdown.sh
