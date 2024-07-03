@@ -75,7 +75,8 @@ function configure_iptables
   iptables -A INPUT -d 255.255.255.255 -j DROP
 
   # Drop packets with excessive RST to avoid Masked attacks
-  iptables -A INPUT -p tcp -m tcp --tcp-flags RST RST -m limit --limit 2/second --limit-burst 2 -j ACCEPT
+  iptables -A INPUT -p tcp -m tcp --tcp-flags RST RST -m limit --limit 2/second \
+    --limit-burst 2 -j ACCEPT
 
   # Block ips doing portscan for 24 hours
   iptables -A INPUT   -m recent --name portscan --rcheck --seconds 86400 -j DROP
@@ -92,7 +93,8 @@ function configure_iptables
   iptables -A INPUT -p icmp --icmp-type 0 -j ACCEPT
 
   # Allow one ssh connection at a time
-  iptables -A INPUT -p tcp --syn --dport 141 -m connlimit --connlimit-above 2 -j REJECT
+  iptables -A INPUT -p tcp --syn --dport 141 -m connlimit --connlimit-above 2 -j \
+    REJECT
 
   iptables-save > /etc/iptables/rules.v4
   ip6tables-save > /etc/iptables/rules.v6
@@ -100,45 +102,45 @@ function configure_iptables
 
 function install_fail2ban
 {
-  # Install fail2ban
   apt install fail2ban -y
 }
 
 function configure_kernel
 {
-  # Configure Kernel
   echo \
-    "net.ipv4.tcp_syncookies: 1"\
-    "net.ipv4.conf.all.accept_source_route: 0"\
-    "net.ipv6.conf.all.accept_source_route: 0"\
-    "net.ipv4.conf.default.accept_source_route: 0"\
-    "net.ipv6.conf.default.accept_source_route: 0"\
     "net.ipv4.conf.all.accept_redirects: 0"\
-    "net.ipv6.conf.all.accept_redirects: 0"\
-    "net.ipv4.conf.default.accept_redirects: 0"\
-    "net.ipv6.conf.default.accept_redirects: 0"\
-    "net.ipv4.conf.all.secure_redirects: 1"\
-    "net.ipv4.conf.default.secure_redirects: 1"\
-    "net.ipv4.ip_forward: 0"\
-    "net.ipv6.conf.all.forwarding: 0"\
-    "net.ipv4.conf.all.send_redirects: 0"\
-    "net.ipv4.conf.default.send_redirects: 0"\
+    "net.ipv4.conf.all.accept_source_route: 0"\
+    "net.ipv4.conf.all.log_martians: 1"\
     "net.ipv4.conf.all.rp_filter: 1"\
+    "net.ipv4.conf.all.secure_redirects: 1"\
+    "net.ipv4.conf.all.send_redirects: 0"\
+    "net.ipv4.conf.default.accept_redirects: 0"\
+    "net.ipv4.conf.default.accept_source_route: 0"\
+    "net.ipv4.conf.default.log_martians: 1"\
     "net.ipv4.conf.default.rp_filter: 1"\
+    "net.ipv4.conf.default.secure_redirects: 1"\
+    "net.ipv4.conf.default.send_redirects: 0"\
     "net.ipv4.icmp_echo_ignore_broadcasts: 1"\
     "net.ipv4.icmp_ignore_bogus_error_responses: 1"\
     "net.ipv4.icmp_echo_ignore_all: 0"\
-    "net.ipv4.conf.all.log_martians: 1"\
-    "net.ipv4.conf.default.log_martians: 1"\
+    "net.ipv4.ip_forward: 0"\
     "net.ipv4.tcp_rfc1337: 1"\
-    "kernel.randomize_va_space: 2"\
+    "net.ipv4.tcp_syncookies: 1"\
+    "net.ipv6.conf.all.accept_redirects: 0"\
+    "net.ipv6.conf.all.forwarding: 0"\
+    "net.ipv6.conf.all.accept_source_route: 0"\
+    "net.ipv6.conf.default.accept_redirects: 0"\
+    "net.ipv6.conf.default.accept_source_route: 0"\
     "fs.protected_hardlinks: 1"\
     "fs.protected_symlinks: 1"\
-    "kernel.perf_event_paranoid: 2"\
     "kernel.core_uses_pid: 1"\
+    "kernel.perf_event_paranoid: 2"\
     "kernel.kptr_restrict: 2"\
+    "kernel.randomize_va_space: 2"\
     "kernel.sysrq: 0"\
-    "kernel.yama.ptrace_scope: 1" > /etc/sysctl.d/80-lockdown.conf
+    "kernel.yama.ptrace_scope: 1" \
+
+    > /etc/sysctl.d/80-lockdown.conf || return 1
 
   sysctl --system
 }
@@ -428,8 +430,8 @@ function remount_dir_with_restrictions
 function purge_old_packages
 {
   # Purge old/removed packages
-  apt autoremove -y
-  apt purge "$(dpkg -l | grep '^rc' | awk '{print $2}')" -y
+  apt autoremove -y || return 1
+  apt purge "$( dpkg --list | grep '^rc' | awk '{print $2}' )" -y
 }
 
 #
