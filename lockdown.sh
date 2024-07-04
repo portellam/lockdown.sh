@@ -32,7 +32,7 @@ function apt_update
 function configure_iptables
 {
   # iptables
-  apt install iptables-persistent -y
+  apt install -y iptables-persistent
 
   # Flush existing rules
   iptables -F
@@ -102,7 +102,7 @@ function configure_iptables
 
 function install_fail2ban
 {
-  apt install fail2ban -y
+  apt install -y fail2ban
 }
 
 function configure_kernel
@@ -148,127 +148,128 @@ function configure_kernel
 function automatic_updates
 {
   # Enable automatic updates
-  apt install unattended-upgrades -y
+  apt install -y unattended-upgrades
   dpkg-reconfigure -plow unattended-upgrades
 }
 
 function configure_auditd
 {
   # Install auditd
-  apt install auditd -y
+  apt install -y auditd
 
   # Add config
-  echo "
-# Remove any existing rules
--D
+  echo -e \
+    "# Remove any existing rules"\
+    "-D"\
+    ""\
+    "# Buffer Size"\
+    "# Might need to be increased, depending on the load of your system."\
+    "-b 8192"\
+    ""\
+    "# Failure Mode"\
+    "# 0=Silent"\
+    "# 1=printk, print failure message"\
+    "# 2=panic, halt system"\
+    "-f 1"\
+  ""\
+    "# Audit the audit logs."\
+    "-w /var/log/audit/ -k auditlog"\
+  ""\
+    "## Auditd configuration"\
+    "## Modifications to audit configuration that occur while the audit (check your paths)"\
+    "-w /etc/audit/ -p wa -k auditconfig"\
+    "-w /etc/libaudit.conf -p wa -k auditconfig"\
+    "-w /etc/audisp/ -p wa -k audispconfig"\
+  ""\
+    "# Schedule jobs"\
+    "-w /etc/cron.allow -p wa -k cron"\
+    "-w /etc/cron.deny -p wa -k cron"\
+    "-w /etc/cron.d/ -p wa -k cron"\
+    "-w /etc/cron.daily/ -p wa -k cron"\
+    "-w /etc/cron.hourly/ -p wa -k cron"\
+    "-w /etc/cron.monthly/ -p wa -k cron"\
+    "-w /etc/cron.weekly/ -p wa -k cron"\
+    "-w /etc/crontab -p wa -k cron"\
+    "-w /var/spool/cron/crontabs/ -k cron"\
+  ""\
+    "## user, group, password databases"\
+    "-w /etc/group -p wa -k etcgroup"\
+    "-w /etc/passwd -p wa -k etcpasswd"\
+    "-w /etc/gshadow -k etcgroup"\
+    "-w /etc/shadow -k etcpasswd"\
+    "-w /etc/security/opasswd -k opasswd"\
+  ""\
+    "# Monitor usage of passwd command"\
+    "-w /usr/bin/passwd -p x -k passwd_modification"\
+  ""\
+    "# Monitor user/group tools"\
+    "-w /usr/sbin/groupadd -p x -k group_modification"\
+    "-w /usr/sbin/groupmod -p x -k group_modification"\
+    "-w /usr/sbin/addgroup -p x -k group_modification"\
+    "-w /usr/sbin/useradd -p x -k user_modification"\
+    "-w /usr/sbin/usermod -p x -k user_modification"\
+    "-w /usr/sbin/adduser -p x -k user_modification"\
+  ""\
+    "# Login configuration and stored info"\
+    "-w /etc/login.defs -p wa -k login"\
+    "-w /etc/securetty -p wa -k login"\
+    "-w /var/log/faillog -p wa -k login"\
+    "-w /var/log/lastlog -p wa -k login"\
+    "-w /var/log/tallylog -p wa -k login"\
+  ""\
+    "# Network configuration"\
+    "-w /etc/hosts -p wa -k hosts"\
+    "-w /etc/network/ -p wa -k network"\
+  ""\
+    "## system startup scripts"\
+    "-w /etc/inittab -p wa -k init"\
+    "-w /etc/init.d/ -p wa -k init"\
+    "-w /etc/init/ -p wa -k init"\
+  ""\
+    "# Library search paths"\
+    "-w /etc/ld.so.conf -p wa -k libpath"\
+  ""\
+    "# Kernel parameters and modules"\
+    "-w /etc/sysctl.conf -p wa -k sysctl"\
+    "-w /etc/modprobe.conf -p wa -k modprobe"\
+  ""\
+    "# SSH configuration"\
+    "-w /etc/ssh/sshd_config -k sshd"\
+  ""\
+    "# Hostname"\
+    "-a exit,always -F arch=b32 -S sethostname -k hostname"\
+    "-a exit,always -F arch=b64 -S sethostname -k hostname"\
+  ""\
+    "# Log all commands executed by root"\
+    "-a exit,always -F arch=b64 -F euid=0 -S execve -k rootcmd"\
+    "-a exit,always -F arch=b32 -F euid=0 -S execve -k rootcmd"\
+  ""\
+    "## Capture all failures to access on critical elements"\
+    "-a exit,always -F arch=b64 -S open -F dir=/etc -F success=0 -k unauthedfileacess"\
+    "-a exit,always -F arch=b64 -S open -F dir=/bin -F success=0 -k unauthedfileacess"\
+    "-a exit,always -F arch=b64 -S open -F dir=/home -F success=0 -k unauthedfileacess"\
+    "-a exit,always -F arch=b64 -S open -F dir=/sbin -F success=0 -k unauthedfileacess"\
+    "-a exit,always -F arch=b64 -S open -F dir=/srv -F success=0 -k unauthedfileacess"\
+    "-a exit,always -F arch=b64 -S open -F dir=/usr/bin -F success=0 -k unauthedfileacess"\
+    "-a exit,always -F arch=b64 -S open -F dir=/usr/local/bin -F success=0 -k unauthedfileacess"\
+    "-a exit,always -F arch=b64 -S open -F dir=/usr/sbin -F success=0 -k unauthedfileacess"\
+    "-a exit,always -F arch=b64 -S open -F dir=/var -F success=0 -k unauthedfileacess"\
+  ""\
+    "## su/sudo"\
+    "-w /bin/su -p x -k priv_esc"\
+    "-w /usr/bin/sudo -p x -k priv_esc"\
+    "-w /etc/sudoers -p rw -k priv_esc"\
+  ""\
+    "# Poweroff/reboot tools"\
+    "-w /sbin/halt -p x -k power"\
+    "-w /sbin/poweroff -p x -k power"\
+    "-w /sbin/reboot -p x -k power"\
+    "-w /sbin/shutdown -p x -k power"\
+  ""\
+    "# Make the configuration immutable"\
+    "-e 2" \
+    > /etc/audit/rules.d/audit.rules
 
-# Buffer Size
-# Might need to be increased, depending on the load of your system.
--b 8192
-
-# Failure Mode
-# 0=Silent
-# 1=printk, print failure message
-# 2=panic, halt system
--f 1
-
-# Audit the audit logs.
--w /var/log/audit/ -k auditlog
-
-## Auditd configuration
-## Modifications to audit configuration that occur while the audit (check your paths)
--w /etc/audit/ -p wa -k auditconfig
--w /etc/libaudit.conf -p wa -k auditconfig
--w /etc/audisp/ -p wa -k audispconfig
-
-# Schedule jobs
--w /etc/cron.allow -p wa -k cron
--w /etc/cron.deny -p wa -k cron
--w /etc/cron.d/ -p wa -k cron
--w /etc/cron.daily/ -p wa -k cron
--w /etc/cron.hourly/ -p wa -k cron
--w /etc/cron.monthly/ -p wa -k cron
--w /etc/cron.weekly/ -p wa -k cron
--w /etc/crontab -p wa -k cron
--w /var/spool/cron/crontabs/ -k cron
-
-## user, group, password databases
--w /etc/group -p wa -k etcgroup
--w /etc/passwd -p wa -k etcpasswd
--w /etc/gshadow -k etcgroup
--w /etc/shadow -k etcpasswd
--w /etc/security/opasswd -k opasswd
-
-# Monitor usage of passwd command
--w /usr/bin/passwd -p x -k passwd_modification
-
-# Monitor user/group tools
--w /usr/sbin/groupadd -p x -k group_modification
--w /usr/sbin/groupmod -p x -k group_modification
--w /usr/sbin/addgroup -p x -k group_modification
--w /usr/sbin/useradd -p x -k user_modification
--w /usr/sbin/usermod -p x -k user_modification
--w /usr/sbin/adduser -p x -k user_modification
-
-# Login configuration and stored info
--w /etc/login.defs -p wa -k login
--w /etc/securetty -p wa -k login
--w /var/log/faillog -p wa -k login
--w /var/log/lastlog -p wa -k login
--w /var/log/tallylog -p wa -k login
-
-# Network configuration
--w /etc/hosts -p wa -k hosts
--w /etc/network/ -p wa -k network
-
-## system startup scripts
--w /etc/inittab -p wa -k init
--w /etc/init.d/ -p wa -k init
--w /etc/init/ -p wa -k init
-
-# Library search paths
--w /etc/ld.so.conf -p wa -k libpath
-
-# Kernel parameters and modules
--w /etc/sysctl.conf -p wa -k sysctl
--w /etc/modprobe.conf -p wa -k modprobe
-
-# SSH configuration
--w /etc/ssh/sshd_config -k sshd
-
-# Hostname
--a exit,always -F arch=b32 -S sethostname -k hostname
--a exit,always -F arch=b64 -S sethostname -k hostname
-
-# Log all commands executed by root
--a exit,always -F arch=b64 -F euid=0 -S execve -k rootcmd
--a exit,always -F arch=b32 -F euid=0 -S execve -k rootcmd
-
-## Capture all failures to access on critical elements
--a exit,always -F arch=b64 -S open -F dir=/etc -F success=0 -k unauthedfileacess
--a exit,always -F arch=b64 -S open -F dir=/bin -F success=0 -k unauthedfileacess
--a exit,always -F arch=b64 -S open -F dir=/home -F success=0 -k unauthedfileacess
--a exit,always -F arch=b64 -S open -F dir=/sbin -F success=0 -k unauthedfileacess
--a exit,always -F arch=b64 -S open -F dir=/srv -F success=0 -k unauthedfileacess
--a exit,always -F arch=b64 -S open -F dir=/usr/bin -F success=0 -k unauthedfileacess
--a exit,always -F arch=b64 -S open -F dir=/usr/local/bin -F success=0 -k unauthedfileacess
--a exit,always -F arch=b64 -S open -F dir=/usr/sbin -F success=0 -k unauthedfileacess
--a exit,always -F arch=b64 -S open -F dir=/var -F success=0 -k unauthedfileacess
-
-## su/sudo
--w /bin/su -p x -k priv_esc
--w /usr/bin/sudo -p x -k priv_esc
--w /etc/sudoers -p rw -k priv_esc
-
-# Poweroff/reboot tools
--w /sbin/halt -p x -k power
--w /sbin/poweroff -p x -k power
--w /sbin/reboot -p x -k power
--w /sbin/shutdown -p x -k power
-
-# Make the configuration immutable
--e 2
-" > /etc/audit/rules.d/audit.rules
   systemctl enable auditd.service
   service auditd restart
 }
@@ -331,20 +332,30 @@ PermitRootLogin no
 function add_legal_banner
 {
   # Add legal banner
-  echo "
-Unauthorized access to this server is prohibited.
-Legal action will be taken. Disconnect now.
-" > /etc/issue
-  echo "
-Unauthorized access to this server is prohibited.
-Legal action will be taken. Disconnect now.
-" > /etc/issue.net
+  echo \
+    "Unauthorized access to this server is prohibited."\
+    "Legal action will be taken. Disconnect now." \
+    > /etc/issue
+
+  echo \
+    "Unauthorized access to this server is prohibited."
+    "Legal action will be taken. Disconnect now." \
+    > /etc/issue.net
 }
 
 function install_recommended_packages
 {
   # Install recommended packages
-  apt install apt-listbugs apt-listchanges needrestart debsecan debsums libpam-cracklib aide usbguard acct -y
+  apt install -y \
+    acct \
+    aide \
+    apt-listbugs \
+    apt-listchanges \
+    debsecan \
+    debsums \
+    libpam-cracklib \
+    needrestart \
+    usbguard
 }
 
 function setup_aide
@@ -364,20 +375,23 @@ function enable_process_accounting
 function disable_uncommon_filesystems
 {
   # Disable uncommon filesystems
-  echo "install cramfs /bin/true
-install freevxfs /bin/true
-install hfs /bin/true
-install hfsplus /bin/true
-install jffs2 /bin/true
-install squashfs /bin/true" >> /etc/modprobe.d/filesystems.conf
+  echo "install cramfs /bin/true"\
+    "install freevxfs /bin/true"\
+    "install hfs /bin/true"\
+    "install hfsplus /bin/true"\
+    "install jffs2 /bin/true"\
+    "install squashfs /bin/true" \
+  >> /etc/modprobe.d/filesystems.conf
 }
 
 function disable_firewire
 {
-  echo "install udf /bin/true
-blacklist firewire-core
-blacklist firewire-ohci
-blacklist firewire-sbp2" >> /etc/modprobe.d/blacklist.conf
+  echo \
+    "install udf /bin/true"\
+    "blacklist firewire-core"\
+    "blacklist firewire-ohci"\
+    "blacklist firewire-sbp2" \
+    >> /etc/modprobe.d/blacklist.conf
 }
 
 function disable_usb
@@ -387,10 +401,12 @@ function disable_usb
 
 function disable_uncommon_protocols
 {
-  echo "install sctp /bin/true
-install dccp /bin/true
-install rds /bin/true
-install tipc /bin/true" >> /etc/modprobe.d/protocols.conf
+  echo \
+    "install sctp /bin/true"\
+    "install dccp /bin/true"\
+    "install rds /bin/true"\
+    "install tipc /bin/true" \
+    >> /etc/modprobe.d/protocols.conf
 }
 
 function change_root_permissions
@@ -431,7 +447,7 @@ function purge_old_packages
 {
   # Purge old/removed packages
   apt autoremove -y || return 1
-  apt purge "$( dpkg --list | grep '^rc' | awk '{print $2}' )" -y
+  apt purge -y "$( dpkg --list | grep '^rc' | awk '{print $2}' )"
 }
 
 #
@@ -469,7 +485,7 @@ function purge_old_packages
   }
 
 #
-# DESC:   main
+# DESC:   Main execution.
 # RETURN: If all prompted commands pass, return 0.
 #         If one or more command(s) fail, return 1.
 #
@@ -520,5 +536,8 @@ function purge_old_packages
     return 0
   }
 
-main
-exit "${?}"
+#
+# Main
+#
+  main
+  exit "${?}"
