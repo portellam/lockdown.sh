@@ -13,8 +13,8 @@
 # TODO:
 # - [ ] refactor all functions.
 #   - [ ] add comments.
-#   - [ ] adhere to 80/24 rule.
-# - [ ] organize functions.
+#   - [x] adhere to 80/24 rule.
+# - [x] organize functions.
 # - [ ] determine package manager and run updates or installs.
 
 #
@@ -106,18 +106,22 @@
 #
 # DESC: Additions
 #
+  #
+  # RETURN: If successful, return 0.
+  #         If not successful, return 1.
+  #
     function add_legal_banner
     {
-    # Add legal banner
-    echo -e \
-      "Unauthorized access to this server is prohibited.\n"\
-      "Legal action will be taken. Disconnect now." \
-      > /etc/issue
+      # Add legal banner
+      echo -e \
+        "Unauthorized access to this server is prohibited.\n"\
+        "Legal action will be taken. Disconnect now." \
+        > /etc/issue || return 1
 
-    echo -e \
-      "Unauthorized access to this server is prohibited.\n"\
-      "Legal action will be taken. Disconnect now." \
-      > /etc/issue.net
+      echo -e \
+        "Unauthorized access to this server is prohibited.\n"\
+        "Legal action will be taken. Disconnect now." \
+        > /etc/issue.net || return 1
     }
 
   #
@@ -136,45 +140,50 @@
       apt full-upgrade -y || return 1
     }
 
+  #
+  # RETURN: If successful, return 0.
+  #         If not successful, return 1.
+  #
     function automatic_updates
     {
       # Enable automatic updates
-      apt install -y unattended-upgrades
-      dpkg-reconfigure -plow unattended-upgrades
+      apt install -y unattended-upgrades || return 1
+      dpkg-reconfigure -plow unattended-upgrades || return 1
     }
 
   #
-  # RETURN: Return code from last statement.
+  # RETURN: If successful, return 0.
+  #         If not successful, return 1.
   #
     function configure_iptables
     {
       # iptables
-      apt install -y iptables-persistent
+      apt install -y iptables-persistent || return 1
 
       # Flush existing rules
-      iptables -F
+      iptables -F || return 1
 
       # Defaults
-      iptables -P INPUT DROP
-      iptables -P FORWARD DROP
-      iptables -P OUTPUT ACCEPT
+      iptables -P INPUT DROP || return 1
+      iptables -P FORWARD DROP || return 1
+      iptables -P OUTPUT ACCEPT || return 1
 
       # Accept loopback input
-      iptables -A INPUT -i lo -p all -j ACCEPT
+      iptables -A INPUT -i lo -p all -j ACCEPT || return 1
 
       # Allow three-way Handshake
-      iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+      iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT || return 1
 
       # Stop Masked Attacks
-      iptables -A INPUT -p icmp --icmp-type 13 -j DROP
-      iptables -A INPUT -p icmp --icmp-type 17 -j DROP
-      iptables -A INPUT -p icmp --icmp-type 14 -j DROP
-      iptables -A INPUT -p icmp -m limit --limit 1/second -j ACCEPT
+      iptables -A INPUT -p icmp --icmp-type 13 -j DROP || return 1
+      iptables -A INPUT -p icmp --icmp-type 17 -j DROP || return 1
+      iptables -A INPUT -p icmp --icmp-type 14 -j DROP || return 1
+      iptables -A INPUT -p icmp -m limit --limit 1/second -j ACCEPT || return 1
 
       # Discard invalid Packets
-      iptables -A INPUT -m state --state INVALID -j DROP
-      iptables -A FORWARD -m state --state INVALID -j DROP
-      iptables -A OUTPUT -m state --state INVALID -j DROP
+      iptables -A INPUT -m state --state INVALID -j DROP || return 1
+      iptables -A FORWARD -m state --state INVALID -j DROP || return 1
+      iptables -A OUTPUT -m state --state INVALID -j DROP || return 1
 
       # Drop Spoofing attacks
       iptables -A INPUT -d 0.0.0.0/8 -j DROP
@@ -213,8 +222,8 @@
       iptables -A INPUT -p tcp --syn --dport 141 -m connlimit --connlimit-above 2 -j \
         REJECT
 
-      iptables-save > /etc/iptables/rules.v4
-      ip6tables-save > /etc/iptables/rules.v6
+      iptables-save > /etc/iptables/rules.v4 || return 1
+      ip6tables-save > /etc/iptables/rules.v6 || return 1
     }
 
   #
@@ -255,16 +264,19 @@
         "kernel.randomize_va_space: 2\n"\
         "kernel.sysrq: 0\n"\
         "kernel.yama.ptrace_scope: 1" \
-
         > /etc/sysctl.d/80-lockdown.conf || return 1
 
       sysctl --system || return 1
     }
 
+  #
+  # RETURN: If successful, return 0.
+  #         If not successful, return 1.
+  #
     function configure_auditd
     {
       # Install auditd
-      apt install -y auditd
+      apt install -y auditd || return 1
 
       # Add config
       echo -e \
@@ -399,20 +411,26 @@
         "\n"\
         "# Make the configuration immutable\n"\
         "-e 2" \
-        > /etc/audit/rules.d/audit.rules
+        > /etc/audit/rules.d/audit.rules || return 1
 
-      systemctl enable auditd.service
-      service auditd restart
+      systemctl enable auditd.service || return 1
+      service auditd restart || return 1
     }
 
-
+  #
+  # RETURN: If successful, return 0.
+  #         If not successful, return 1.
+  #
     function enable_process_accounting
     {
       # Enable process accounting
-      systemctl enable acct.service
-      systemctl start acct.service
+      systemctl enable acct.service || return 1
+      systemctl start acct.service || return 1
     }
 
+  #
+  # RETURN: Return code from last statement.
+  #
     function install_recommended_packages
     {
       # Install recommended packages
@@ -428,32 +446,32 @@
         usbguard
     }
 
+  #
+  # RETURN: Return code from last statement.
+  #
     function move_tmp_to_tmpfs
     {
       # Move tmp to tmpfs
       echo -e "tmpfs /tmp tmpfs rw,nosuid,nodev" >> /etc/fstab
     }
 
+  #
+  # RETURN: If successful, return 0.
+  #         If not successful, return 1.
+  #
     function remount_dir_with_restrictions
     {
       # Mount tmp with noexec
-      mount -o remount,noexec /tmp
+      mount -o remount,noexec /tmp || return 1
 
       # Mount /proc with hidepid=2
-      mount -o remount,rw,hidepid=2 /proc
+      mount -o remount,rw,hidepid=2 /proc || return 1
 
       # Mount /dev with noexec
-      mount -o remount,noexec /dev
+      mount -o remount,noexec /dev || return 1
 
       # Mount /run as nodev
-      mount -o remount,nodev /run
-    }
-
-    function setup_aide
-    {
-      # Setup aide
-      aideinit
-      mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+      mount -o remount,nodev /run || return 1
     }
 
 #
@@ -462,70 +480,101 @@
   function create_admin_user
   {
     # Create admin user
-    echo -e -n "Enter admin username: "
-    read -r str_username
-    adduser "${str_username}"
-    mkdir "/home/${str_username}/.ssh"
-    cp /root/.ssh/authorized_keys "/home/${str_username}/.ssh/authorized_keys"
-    chown --recursive "${str_username}" "/home/${str_username}/.ssh"
-    usermod --append --groups sudo "${str_username}"
+    echo -e -n "Enter admin username: " || return 1
+    read -r str_username || return 1
+    adduser "${str_username}" || return 1
+    mkdir "/home/${str_username}/.ssh" || return 1
+
+    cp /root/.ssh/authorized_keys "/home/${str_username}/.ssh/authorized_keys" \
+      || return 1
+
+    chown --recursive "${str_username}" "/home/${str_username}/.ssh" || return 1
+    usermod --append --groups sudo "${str_username}" || return 1
 
     # Restrict ssh to admin user
     echo -e \
       "AllowUsers ${str_username}\n"\
       "PermitRootLogin no\n" \
-      >> /etc/ssh/sshd_config
+      >> /etc/ssh/sshd_config || return 1
   }
 
-  function change_root_permissions
-  {
-  # Change /root permissions
-    chmod 700 /root
-    chmod 750 /home/debian
-  }
+  #
+  # RETURN: If successful, return 0.
+  #         If not successful, return 1.
+  #
+    function change_root_permissions
+    {
+      # Change /root permissions
+        chmod 700 /root || return 1
+        chmod 750 /home/debian || return 1
+    }
 
-  function restrict_access_to_compilers
-  {
-    # Restrict access to compilers
-    chmod o-rx /usr/bin/as
-  }
+  #
+  # RETURN: Return code from last statement.
+  #
+    function restrict_access_to_compilers
+    {
+      # Restrict access to compilers
+      chmod o-rx /usr/bin/as
+    }
 
-  function restrict_login
-  {
-    # Set login.defs
-    sed --in-place s/UMASK.*/UMASK\ 027/ /etc/login.defs
-    sed --in-place s/PASS_MAX_DAYS.*/PASS_MAX_DAYS\ 90/ /etc/login.defs
-    sed --in-place s/PASS_MIN_DAYS.*/PASS_MIN_DAYS\ 7/ /etc/login.defs
+  #
+  # RETURN: If successful, return 0.
+  #         If not successful, return 1.
+  #
+    function restrict_login
+    {
+      # Set login.defs
+      sed --in-place s/UMASK.*/UMASK\ 027/ /etc/login.defs || return 1
+      sed --in-place s/PASS_MAX_DAYS.*/PASS_MAX_DAYS\ 90/ /etc/login.defs || return 1
+      sed --in-place s/PASS_MIN_DAYS.*/PASS_MIN_DAYS\ 7/ /etc/login.defs || return 1
 
-    echo -e \
-      "SHA_CRYPT_MIN_ROUNDS 1000000\n"\
-      "SHA_CRYPT_MAX_ROUNDS 100000000" \
-      >> /etc/login.defs
-  }
+      echo -e \
+        "SHA_CRYPT_MIN_ROUNDS 1000000\n"\
+        "SHA_CRYPT_MAX_ROUNDS 100000000" \
+        >> /etc/login.defs || return 1
+    }
 
-  function secure_ssh
-  {
-    # Secure ssh
-    echo -e \
-      "ClientAliveCountMax 2\n"\
-      "Compression no\n"\
-      "LogLevel VERBOSE\n"\
-      "MaxAuthTries 3\n"\
-      "MaxSessions 2\n"\
-      "TCPKeepAlive no\n"\
-      "AllowAgentForwarding no\n"\
-      "AllowTcpForwarding no\n"\
-      "Port 141\n"\
-      "PasswordAuthentication no\n"\
-      >> /etc/ssh/sshd_config
+  #
+  # RETURN: If successful, return 0.
+  #         If not successful, return 1.
+  #
+    function secure_ssh
+    {
+      # Secure ssh
+      echo -e \
+        "ClientAliveCountMax 2\n"\
+        "Compression no\n"\
+        "LogLevel VERBOSE\n"\
+        "MaxAuthTries 3\n"\
+        "MaxSessions 2\n"\
+        "TCPKeepAlive no\n"\
+        "AllowAgentForwarding no\n"\
+        "AllowTcpForwarding no\n"\
+        "Port 141\n"\
+        "PasswordAuthentication no\n"\
+        >> /etc/ssh/sshd_config || return 1
 
-    sed --in-place s/^X11Forwarding.*/X11Forwarding\ no/ /etc/ssh/sshd_config
-    sed --in-place s/^UsePAM.*/UsePAM\ no/ /etc/ssh/sshd_config
-  }
+      sed --in-place s/^X11Forwarding.*/X11Forwarding\ no/ /etc/ssh/sshd_config \
+        || return 1
+
+      sed --in-place s/^UsePAM.*/UsePAM\ no/ /etc/ssh/sshd_config || return 1
+    }
 
 #
 # DESC: Installs
 #
+  #
+  # RETURN: If successful, return 0.
+  #         If not successful, return 1.
+  #
+    function setup_aide
+    {
+      # Setup aide
+      aideinit || return 1
+      mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db || return 1
+    }
+
   #
   # RETURN: Return code from last statement.
   #
