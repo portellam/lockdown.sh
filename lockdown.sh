@@ -10,14 +10,6 @@
 #
 
 #
-# TODO:
-# - [x] refactor all functions.
-#   - [x] add comments.
-#   - [x] adhere to 80/24 rule.
-# - [x] organize functions.
-# - [ ] determine package manager and run updates or installs.
-
-#
 # parameters
 #
   declare -i INT_SSH_PORT=141
