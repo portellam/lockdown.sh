@@ -2,7 +2,7 @@
 <br>
 
 # lockdown.sh
-### v1.0.0 | [Download](#4-download)
+### v1.0.1 | [Download](#4-download)
 `lockdown.sh` is a single-file zero-config shell script to be run to lockdown a
 newly installed Linux OS. `lockdown.sh` aims to set a sensible baseline which
 can be built upon for specific needs.
@@ -43,7 +43,8 @@ the created admin user if an admin user is created.
 [GitHub][github-releases]
 
 - Download the script file:
-    - `wget https://raw.githubusercontent.com/x08d/lockdown.sh/master/lockdown.sh`
+    - `wget https://www.codeberg.org/portellam/lockdown.sh/master/lockdown.sh`
+    - `wget https://www.github.com/portellam/lockdown.sh/master/lockdown.sh`
 
 - Download the `.zip` file:
     1. Viewing from the top of the repository's (current) webpage, click the
@@ -84,12 +85,12 @@ chmod +x ./lockdown.sh
 - Adds daily cronjob to update packages on server.
 - Adds a legal banner to `/etc/issue` and `/etc/issue.net`.
 - Configures the kernel.
+- Enables process accounting.
 - Moves `tmp` to `tmpfs`.
 - Remounts `/tmp`, `/proc`, `/dev`, and `/run` to be more restrictive.
 - Updates packages.
 
 #### 6.2. Installed Packages
-- Enables process accounting
 - Installs and configures [auditd](#2) with sensible rules.
 - Installs and sets up [aide](#1).
 - Installs [fail2ban](#3).
