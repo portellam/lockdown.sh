@@ -9,6 +9,8 @@
 # Maintainer(s):  Alex Portell <github.com/portellam>
 #
 
+# TODO: review https://en.wikipedia.org/wiki/Package_manager.
+
 #
 # parameters
 #
