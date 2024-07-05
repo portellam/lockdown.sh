@@ -85,12 +85,12 @@ chmod +x ./lockdown.sh
 - Adds daily cronjob to update packages on server.
 - Adds a legal banner to `/etc/issue` and `/etc/issue.net`.
 - Configures the kernel.
+- Enables process accounting.
 - Moves `tmp` to `tmpfs`.
 - Remounts `/tmp`, `/proc`, `/dev`, and `/run` to be more restrictive.
 - Updates packages.
 
 #### 6.2. Installed Packages
-- Enables process accounting
 - Installs and configures [auditd](#2) with sensible rules.
 - Installs and sets up [aide](#1).
 - Installs [fail2ban](#3).
