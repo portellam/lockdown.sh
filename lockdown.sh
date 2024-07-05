@@ -106,6 +106,20 @@
 #
 # DESC: Additions
 #
+    function add_legal_banner
+    {
+    # Add legal banner
+    echo -e \
+      "Unauthorized access to this server is prohibited.\n"\
+      "Legal action will be taken. Disconnect now." \
+      > /etc/issue
+
+    echo -e \
+      "Unauthorized access to this server is prohibited.\n"\
+      "Legal action will be taken. Disconnect now." \
+      > /etc/issue.net
+    }
+
   #
   # RETURN: If successful, return 0.
   #         If not successful, return 1.
@@ -120,6 +134,13 @@
 
       # Apt full upgrade
       apt full-upgrade -y || return 1
+    }
+
+    function automatic_updates
+    {
+      # Enable automatic updates
+      apt install -y unattended-upgrades
+      dpkg-reconfigure -plow unattended-upgrades
     }
 
   #
@@ -240,10 +261,267 @@
       sysctl --system || return 1
     }
 
+    function configure_auditd
+    {
+      # Install auditd
+      apt install -y auditd
+
+      # Add config
+      echo -e \
+        "# Remove any existing rules\n"\
+        "-D\n"\
+        "\n"\
+        "# Buffer Size\n"\
+        "# Might need to be increased, depending on the load of your system.\n"\
+        "-b 8192\n"\
+        "\n"\
+        "# Failure Mode\n"\
+        "# 0=Silent\n"\
+        "# 1=printk, print failure message\n"\
+        "# 2=panic, halt system\n"\
+        "-f 1\n"\
+        "\n"\
+        "# Audit the audit logs.\n"\
+        "-w /var/log/audit/ -k auditlog\n"\
+        "\n"\
+        "## Auditd configuration\n"\
+
+        "## Modifications to audit configuration that occur while the audit " \
+          "(check your paths)\n"\
+
+        "-w /etc/audit/ -p wa -k auditconfig\n"\
+        "-w /etc/libaudit.conf -p wa -k auditconfig\n"\
+        "-w /etc/audisp/ -p wa -k audispconfig\n"\
+        "\n"\
+        "# Schedule jobs\n"\
+        "-w /etc/cron.allow -p wa -k cron\n"\
+        "-w /etc/cron.deny -p wa -k cron\n"\
+        "-w /etc/cron.d/ -p wa -k cron\n"\
+        "-w /etc/cron.daily/ -p wa -k cron\n"\
+        "-w /etc/cron.hourly/ -p wa -k cron\n"\
+        "-w /etc/cron.monthly/ -p wa -k cron\n"\
+        "-w /etc/cron.weekly/ -p wa -k cron\n"\
+        "-w /etc/crontab -p wa -k cron\n"\
+        "-w /var/spool/cron/crontabs/ -k cron\n"\
+        "\n"\
+        "## user, group, password databases\n"\
+        "-w /etc/group -p wa -k etcgroup\n"\
+        "-w /etc/passwd -p wa -k etcpasswd\n"\
+        "-w /etc/gshadow -k etcgroup\n"\
+        "-w /etc/shadow -k etcpasswd\n"\
+        "-w /etc/security/opasswd -k opasswd\n"\
+        "\n"\
+        "# Monitor usage of passwd command\n"\
+        "-w /usr/bin/passwd -p x -k passwd_modification\n"\
+        "\n"\
+        "# Monitor user/group tools\n"\
+        "-w /usr/sbin/groupadd -p x -k group_modification\n"\
+        "-w /usr/sbin/groupmod -p x -k group_modification\n"\
+        "-w /usr/sbin/addgroup -p x -k group_modification\n"\
+        "-w /usr/sbin/useradd -p x -k user_modification\n"\
+        "-w /usr/sbin/usermod -p x -k user_modification\n"\
+        "-w /usr/sbin/adduser -p x -k user_modification\n"\
+        "\n"\
+        "# Login configuration and stored info\n"\
+        "-w /etc/login.defs -p wa -k login\n"\
+        "-w /etc/securetty -p wa -k login\n"\
+        "-w /var/log/faillog -p wa -k login\n"\
+        "-w /var/log/lastlog -p wa -k login\n"\
+        "-w /var/log/tallylog -p wa -k login\n"\
+        "\n"\
+        "# Network configuration\n"\
+        "-w /etc/hosts -p wa -k hosts\n"\
+        "-w /etc/network/ -p wa -k network\n"\
+        "\n"\
+        "## system startup scripts\n"\
+        "-w /etc/inittab -p wa -k init\n"\
+        "-w /etc/init.d/ -p wa -k init\n"\
+        "-w /etc/init/ -p wa -k init\n"\
+        "\n"\
+        "# Library search paths\n"\
+        "-w /etc/ld.so.conf -p wa -k libpath\n"\
+        "\n"\
+        "# Kernel parameters and modules\n"\
+        "-w /etc/sysctl.conf -p wa -k sysctl\n"\
+        "-w /etc/modprobe.conf -p wa -k modprobe\n"\
+        "\n"\
+        "# SSH configuration\n"\
+        "-w /etc/ssh/sshd_config -k sshd\n"\
+        "\n"\
+        "# Hostname\n"\
+        "-a exit,always -F arch=b32 -S sethostname -k hostname\n"\
+        "-a exit,always -F arch=b64 -S sethostname -k hostname\n"\
+        "\n"\
+        "# Log all commands executed by root\n"\
+        "-a exit,always -F arch=b64 -F euid=0 -S execve -k rootcmd\n"\
+        "-a exit,always -F arch=b32 -F euid=0 -S execve -k rootcmd\n"\
+        "\n"\
+        "## Capture all failures to access on critical elements\n"\
+
+        "-a exit,always -F arch=b64 -S open -F dir=/etc -F success=0 -k " \
+          "unauthedfileacess\n"\
+
+        "-a exit,always -F arch=b64 -S open -F dir=/bin -F success=0 -k " \
+          "unauthedfileacess\n"\
+
+        "-a exit,always -F arch=b64 -S open -F dir=/home -F success=0 -k " \
+          "unauthedfileacess\n"\
+
+        "-a exit,always -F arch=b64 -S open -F dir=/sbin -F success=0 -k " \
+          "unauthedfileacess\n"\
+
+        "-a exit,always -F arch=b64 -S open -F dir=/srv -F success=0 -k " \
+          "unauthedfileacess\n"\
+
+        "-a exit,always -F arch=b64 -S open -F dir=/usr/bin -F success=0 -k " \
+          "unauthedfileacess\n"\
+
+        "-a exit,always -F arch=b64 -S open -F dir=/usr/local/bin -F success=0 -k " \
+          "unauthedfileacess\n"\
+
+        "-a exit,always -F arch=b64 -S open -F dir=/usr/sbin -F success=0 -k " \
+          "unauthedfileacess\n"\
+
+        "-a exit,always -F arch=b64 -S open -F dir=/var -F success=0 -k " \
+          "unauthedfileacess\n"\
+
+        "\n"\
+        "## su/sudo\n"\
+        "-w /bin/su -p x -k priv_esc\n"\
+        "-w /usr/bin/sudo -p x -k priv_esc\n"\
+        "-w /etc/sudoers -p rw -k priv_esc\n"\
+        "\n"\
+        "# Poweroff/reboot tools\n"\
+        "-w /sbin/halt -p x -k power\n"\
+        "-w /sbin/poweroff -p x -k power\n"\
+        "-w /sbin/reboot -p x -k power\n"\
+        "-w /sbin/shutdown -p x -k power\n"\
+        "\n"\
+        "# Make the configuration immutable\n"\
+        "-e 2" \
+        > /etc/audit/rules.d/audit.rules
+
+      systemctl enable auditd.service
+      service auditd restart
+    }
+
+
+    function enable_process_accounting
+    {
+      # Enable process accounting
+      systemctl enable acct.service
+      systemctl start acct.service
+    }
+
+    function install_recommended_packages
+    {
+      # Install recommended packages
+      apt install -y \
+        acct \
+        aide \
+        apt-listbugs \
+        apt-listchanges \
+        debsecan \
+        debsums \
+        libpam-cracklib \
+        needrestart \
+        usbguard
+    }
+
+    function move_tmp_to_tmpfs
+    {
+      # Move tmp to tmpfs
+      echo -e "tmpfs /tmp tmpfs rw,nosuid,nodev" >> /etc/fstab
+    }
+
+    function remount_dir_with_restrictions
+    {
+      # Mount tmp with noexec
+      mount -o remount,noexec /tmp
+
+      # Mount /proc with hidepid=2
+      mount -o remount,rw,hidepid=2 /proc
+
+      # Mount /dev with noexec
+      mount -o remount,noexec /dev
+
+      # Mount /run as nodev
+      mount -o remount,nodev /run
+    }
+
+    function setup_aide
+    {
+      # Setup aide
+      aideinit
+      mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+    }
+
 #
 # DESC: Access Restrictions
 #
+  function create_admin_user
+  {
+    # Create admin user
+    echo -e -n "Enter admin username: "
+    read -r str_username
+    adduser "${str_username}"
+    mkdir "/home/${str_username}/.ssh"
+    cp /root/.ssh/authorized_keys "/home/${str_username}/.ssh/authorized_keys"
+    chown --recursive "${str_username}" "/home/${str_username}/.ssh"
+    usermod --append --groups sudo "${str_username}"
 
+    # Restrict ssh to admin user
+    echo -e \
+      "AllowUsers ${str_username}\n"\
+      "PermitRootLogin no\n" \
+      >> /etc/ssh/sshd_config
+  }
+
+  function change_root_permissions
+  {
+  # Change /root permissions
+    chmod 700 /root
+    chmod 750 /home/debian
+  }
+
+  function restrict_access_to_compilers
+  {
+    # Restrict access to compilers
+    chmod o-rx /usr/bin/as
+  }
+
+  function restrict_login
+  {
+    # Set login.defs
+    sed --in-place s/UMASK.*/UMASK\ 027/ /etc/login.defs
+    sed --in-place s/PASS_MAX_DAYS.*/PASS_MAX_DAYS\ 90/ /etc/login.defs
+    sed --in-place s/PASS_MIN_DAYS.*/PASS_MIN_DAYS\ 7/ /etc/login.defs
+
+    echo -e \
+      "SHA_CRYPT_MIN_ROUNDS 1000000\n"\
+      "SHA_CRYPT_MAX_ROUNDS 100000000" \
+      >> /etc/login.defs
+  }
+
+  function secure_ssh
+  {
+    # Secure ssh
+    echo -e \
+      "ClientAliveCountMax 2\n"\
+      "Compression no\n"\
+      "LogLevel VERBOSE\n"\
+      "MaxAuthTries 3\n"\
+      "MaxSessions 2\n"\
+      "TCPKeepAlive no\n"\
+      "AllowAgentForwarding no\n"\
+      "AllowTcpForwarding no\n"\
+      "Port 141\n"\
+      "PasswordAuthentication no\n"\
+      >> /etc/ssh/sshd_config
+
+    sed --in-place s/^X11Forwarding.*/X11Forwarding\ no/ /etc/ssh/sshd_config
+    sed --in-place s/^UsePAM.*/UsePAM\ no/ /etc/ssh/sshd_config
+  }
 
 #
 # DESC: Installs
@@ -335,285 +613,6 @@
       apt autoremove -y || return 1
       apt purge -y "$( dpkg --list | grep '^rc' | awk '{print $2}' )" || return 1
     }
-
-function automatic_updates
-{
-  # Enable automatic updates
-  apt install -y unattended-upgrades
-  dpkg-reconfigure -plow unattended-upgrades
-}
-
-function configure_auditd
-{
-  # Install auditd
-  apt install -y auditd
-
-  # Add config
-  echo -e \
-    "# Remove any existing rules\n"\
-    "-D\n"\
-    "\n"\
-    "# Buffer Size\n"\
-    "# Might need to be increased, depending on the load of your system.\n"\
-    "-b 8192\n"\
-    "\n"\
-    "# Failure Mode\n"\
-    "# 0=Silent\n"\
-    "# 1=printk, print failure message\n"\
-    "# 2=panic, halt system\n"\
-    "-f 1\n"\
-    "\n"\
-    "# Audit the audit logs.\n"\
-    "-w /var/log/audit/ -k auditlog\n"\
-    "\n"\
-    "## Auditd configuration\n"\
-
-    "## Modifications to audit configuration that occur while the audit " \
-      "(check your paths)\n"\
-
-    "-w /etc/audit/ -p wa -k auditconfig\n"\
-    "-w /etc/libaudit.conf -p wa -k auditconfig\n"\
-    "-w /etc/audisp/ -p wa -k audispconfig\n"\
-    "\n"\
-    "# Schedule jobs\n"\
-    "-w /etc/cron.allow -p wa -k cron\n"\
-    "-w /etc/cron.deny -p wa -k cron\n"\
-    "-w /etc/cron.d/ -p wa -k cron\n"\
-    "-w /etc/cron.daily/ -p wa -k cron\n"\
-    "-w /etc/cron.hourly/ -p wa -k cron\n"\
-    "-w /etc/cron.monthly/ -p wa -k cron\n"\
-    "-w /etc/cron.weekly/ -p wa -k cron\n"\
-    "-w /etc/crontab -p wa -k cron\n"\
-    "-w /var/spool/cron/crontabs/ -k cron\n"\
-    "\n"\
-    "## user, group, password databases\n"\
-    "-w /etc/group -p wa -k etcgroup\n"\
-    "-w /etc/passwd -p wa -k etcpasswd\n"\
-    "-w /etc/gshadow -k etcgroup\n"\
-    "-w /etc/shadow -k etcpasswd\n"\
-    "-w /etc/security/opasswd -k opasswd\n"\
-    "\n"\
-    "# Monitor usage of passwd command\n"\
-    "-w /usr/bin/passwd -p x -k passwd_modification\n"\
-    "\n"\
-    "# Monitor user/group tools\n"\
-    "-w /usr/sbin/groupadd -p x -k group_modification\n"\
-    "-w /usr/sbin/groupmod -p x -k group_modification\n"\
-    "-w /usr/sbin/addgroup -p x -k group_modification\n"\
-    "-w /usr/sbin/useradd -p x -k user_modification\n"\
-    "-w /usr/sbin/usermod -p x -k user_modification\n"\
-    "-w /usr/sbin/adduser -p x -k user_modification\n"\
-    "\n"\
-    "# Login configuration and stored info\n"\
-    "-w /etc/login.defs -p wa -k login\n"\
-    "-w /etc/securetty -p wa -k login\n"\
-    "-w /var/log/faillog -p wa -k login\n"\
-    "-w /var/log/lastlog -p wa -k login\n"\
-    "-w /var/log/tallylog -p wa -k login\n"\
-    "\n"\
-    "# Network configuration\n"\
-    "-w /etc/hosts -p wa -k hosts\n"\
-    "-w /etc/network/ -p wa -k network\n"\
-    "\n"\
-    "## system startup scripts\n"\
-    "-w /etc/inittab -p wa -k init\n"\
-    "-w /etc/init.d/ -p wa -k init\n"\
-    "-w /etc/init/ -p wa -k init\n"\
-    "\n"\
-    "# Library search paths\n"\
-    "-w /etc/ld.so.conf -p wa -k libpath\n"\
-    "\n"\
-    "# Kernel parameters and modules\n"\
-    "-w /etc/sysctl.conf -p wa -k sysctl\n"\
-    "-w /etc/modprobe.conf -p wa -k modprobe\n"\
-    "\n"\
-    "# SSH configuration\n"\
-    "-w /etc/ssh/sshd_config -k sshd\n"\
-    "\n"\
-    "# Hostname\n"\
-    "-a exit,always -F arch=b32 -S sethostname -k hostname\n"\
-    "-a exit,always -F arch=b64 -S sethostname -k hostname\n"\
-    "\n"\
-    "# Log all commands executed by root\n"\
-    "-a exit,always -F arch=b64 -F euid=0 -S execve -k rootcmd\n"\
-    "-a exit,always -F arch=b32 -F euid=0 -S execve -k rootcmd\n"\
-    "\n"\
-    "## Capture all failures to access on critical elements\n"\
-
-    "-a exit,always -F arch=b64 -S open -F dir=/etc -F success=0 -k " \
-      "unauthedfileacess\n"\
-
-    "-a exit,always -F arch=b64 -S open -F dir=/bin -F success=0 -k " \
-      "unauthedfileacess\n"\
-
-    "-a exit,always -F arch=b64 -S open -F dir=/home -F success=0 -k " \
-      "unauthedfileacess\n"\
-
-    "-a exit,always -F arch=b64 -S open -F dir=/sbin -F success=0 -k " \
-      "unauthedfileacess\n"\
-
-    "-a exit,always -F arch=b64 -S open -F dir=/srv -F success=0 -k " \
-      "unauthedfileacess\n"\
-
-    "-a exit,always -F arch=b64 -S open -F dir=/usr/bin -F success=0 -k " \
-      "unauthedfileacess\n"\
-
-    "-a exit,always -F arch=b64 -S open -F dir=/usr/local/bin -F success=0 -k " \
-      "unauthedfileacess\n"\
-
-    "-a exit,always -F arch=b64 -S open -F dir=/usr/sbin -F success=0 -k " \
-      "unauthedfileacess\n"\
-
-    "-a exit,always -F arch=b64 -S open -F dir=/var -F success=0 -k " \
-      "unauthedfileacess\n"\
-
-    "\n"\
-    "## su/sudo\n"\
-    "-w /bin/su -p x -k priv_esc\n"\
-    "-w /usr/bin/sudo -p x -k priv_esc\n"\
-    "-w /etc/sudoers -p rw -k priv_esc\n"\
-    "\n"\
-    "# Poweroff/reboot tools\n"\
-    "-w /sbin/halt -p x -k power\n"\
-    "-w /sbin/poweroff -p x -k power\n"\
-    "-w /sbin/reboot -p x -k power\n"\
-    "-w /sbin/shutdown -p x -k power\n"\
-    "\n"\
-    "# Make the configuration immutable\n"\
-    "-e 2" \
-    > /etc/audit/rules.d/audit.rules
-
-  systemctl enable auditd.service
-  service auditd restart
-}
-
-function restrict_login
-{
-  # Set login.defs
-  sed --in-place s/UMASK.*/UMASK\ 027/ /etc/login.defs
-  sed --in-place s/PASS_MAX_DAYS.*/PASS_MAX_DAYS\ 90/ /etc/login.defs
-  sed --in-place s/PASS_MIN_DAYS.*/PASS_MIN_DAYS\ 7/ /etc/login.defs
-
-  echo -e \
-    "SHA_CRYPT_MIN_ROUNDS 1000000\n"\
-    "SHA_CRYPT_MAX_ROUNDS 100000000" \
-    >> /etc/login.defs
-}
-
-function secure_ssh
-{
-  # Secure ssh
-  echo -e \
-    "ClientAliveCountMax 2\n"\
-    "Compression no\n"\
-    "LogLevel VERBOSE\n"\
-    "MaxAuthTries 3\n"\
-    "MaxSessions 2\n"\
-    "TCPKeepAlive no\n"\
-    "AllowAgentForwarding no\n"\
-    "AllowTcpForwarding no\n"\
-    "Port 141\n"\
-    "PasswordAuthentication no\n"\
-    >> /etc/ssh/sshd_config
-
-  sed --in-place s/^X11Forwarding.*/X11Forwarding\ no/ /etc/ssh/sshd_config
-  sed --in-place s/^UsePAM.*/UsePAM\ no/ /etc/ssh/sshd_config
-}
-
-function create_admin_user
-{
-  # Create admin user
-  echo -e -n "Enter admin username: "
-  read -r str_username
-  adduser "${str_username}"
-  mkdir "/home/${str_username}/.ssh"
-  cp /root/.ssh/authorized_keys "/home/${str_username}/.ssh/authorized_keys"
-  chown --recursive "${str_username}" "/home/${str_username}/.ssh"
-  usermod --append --groups sudo "${str_username}"
-
-  # Restrict ssh to admin user
-  echo -e \
-    "AllowUsers ${str_username}\n"\
-    "PermitRootLogin no\n" \
-    >> /etc/ssh/sshd_config
-}
-
-function add_legal_banner
-{
-  # Add legal banner
-  echo -e \
-    "Unauthorized access to this server is prohibited.\n"\
-    "Legal action will be taken. Disconnect now." \
-    > /etc/issue
-
-  echo -e \
-    "Unauthorized access to this server is prohibited.\n"\
-    "Legal action will be taken. Disconnect now." \
-    > /etc/issue.net
-}
-
-function install_recommended_packages
-{
-  # Install recommended packages
-  apt install -y \
-    acct \
-    aide \
-    apt-listbugs \
-    apt-listchanges \
-    debsecan \
-    debsums \
-    libpam-cracklib \
-    needrestart \
-    usbguard
-}
-
-function setup_aide
-{
-  # Setup aide
-  aideinit
-  mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
-}
-
-function enable_process_accounting
-{
-  # Enable process accounting
-  systemctl enable acct.service
-  systemctl start acct.service
-}
-
-function change_root_permissions
-{
- # Change /root permissions
-  chmod 700 /root
-  chmod 750 /home/debian
-}
-
-function restrict_access_to_compilers
-{
-  # Restrict access to compilers
-  chmod o-rx /usr/bin/as
-}
-
-function move_tmp_to_tmpfs
-{
-  # Move tmp to tmpfs
-  echo -e "tmpfs /tmp tmpfs rw,nosuid,nodev" >> /etc/fstab
-}
-
-function remount_dir_with_restrictions
-{
-  # Mount tmp with noexec
-  mount -o remount,noexec /tmp
-
-  # Mount /proc with hidepid=2
-  mount -o remount,rw,hidepid=2 /proc
-
-  # Mount /dev with noexec
-  mount -o remount,noexec /dev
-
-  # Mount /run as nodev
-  mount -o remount,nodev /run
-}
 
 #
 # Main
