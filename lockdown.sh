@@ -12,6 +12,8 @@
 #
 # parameters
 #
+  declare -a ARR_ARGUMENTS="${*}"
+  declare BOOL_DO_EVERYTHING=false
   declare -i INT_SSH_PORT=141
 
 #
@@ -24,6 +26,8 @@
   #
     function main
     {
+      parse_arguments || return 1
+
       local -Ar dict_command_prompts=(
         ["apt_update"]="Update and upgrade all packages"
         ["configure_iptables"]="Configure iptables"
@@ -89,6 +93,46 @@
       }
 
     #
+    # DESC:   Parse argument.
+    # $1:     the argument as a string.
+    # RETURN: If the argument is a match or is null, return 0.
+    #         If not a match, return 1.
+    #
+      function parse_argument
+      {
+        case "${1}" in
+          "-a" | "--all" )
+            BOOL_DO_EVERYTHING=true
+            ;;
+
+          "" )
+            return 0
+            ;;
+
+          * )
+            return 1
+            ;;
+        esac
+      }
+
+    #
+    # DESC:   Parse arguments.
+    # RETURN: If parse is successful, return 0.
+    #         If not, return 1.
+    #
+      function parse_arguments
+      {
+        if ! printf "%s\n" "${ARR_ARGUMENTS[@]}" | sort | uniq --repeated; then
+          echo -e "$0: Duplicate argument(s)."
+          return 1
+        fi
+
+        for str_argument in "${ARR_ARGUMENTS[*]}"; do
+          parse_argument "${str_argument}" || return 1
+        done
+      }
+
+    #
     # DESC:   Prompt the user to execute the command.
     # $1:     the command name as a string.
     # $2:     the prompt as a string.
@@ -104,13 +148,16 @@
         typeset -f "${str_command}" | tail --lines +2
 
         echo -e "${str_prompt}"
-        echo -en "$0: Run the above command(s)? [Y/n]: "
 
-        read -r str_answer
+        if ! "${BOOL_DO_EVERYTHING}"; then
+          echo -en "$0: Run the above command(s)? [Y/n]: "
 
-        if [ "${str_answer}" != "${answer#[Yy]}" ] ;then
-          echo -e "$0: Skipped command(s)."
-          return 255
+          read -r str_answer
+
+          if [ "${str_answer}" != "${answer#[Yy]}" ] ;then
+            echo -e "$0: Skipped command(s)."
+            return 255
+          fi
         fi
 
         if ! ${str_command}; then
