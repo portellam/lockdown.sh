@@ -14,9 +14,94 @@
 #
 # parameters
 #
+  declare -r SCRIPT_NAME="${0}"
   declare -a ARR_ARGUMENTS="${*}"
   declare BOOL_DO_EVERYTHING=false
   declare -i INT_SSH_PORT=141
+
+  declare -ar ARR_COMMANDS=(
+    #
+    # Additions
+    #
+      "add_legal_banner"
+      "apt_update"
+      "configure_iptables"
+      "configure_kernel"
+      "enable_process_accounting"
+      "remount_dir_with_restrictions"
+
+    #
+    # Installed Packages
+    #
+      "install_unattended_upgrades"
+      "install_fail2ban"
+      "install_recommended_packages"
+      "configure_auditd"
+      "setup_aide"
+
+    #
+    # Removals
+    #
+      "disable_core_dumps"
+      "disable_firewire"
+      "disable_usb"
+      "disable_uncommon_filesystems"
+      "disable_uncommon_protocols"
+      "purge_old_packages"
+
+    #
+    # Access Restrictions
+    #
+      "create_admin_user"
+      "change_root_permissions"
+      "restrict_access_to_compilers"
+      "move_tmp_to_tmpfs"
+      "secure_ssh"
+      "restrict_login"
+  )
+
+  declare -Ar DICT_COMMAND_PROMPTS=(
+    #
+    # Additions
+    #
+      ["add_legal_banner"]="Add legal banner"
+      ["apt_update"]="Update and upgrade all packages"
+      ["configure_iptables"]="Configure iptables"
+      ["configure_kernel"]="Configure kernel"
+      ["enable_process_accounting"]="Enable process accounting"
+      ["remount_dir_with_restrictions"]="Remount /tmp /proc /dev /run with restrictions"
+
+    #
+    # Installed Packages
+    #
+      ["install_unattended_upgrades"]="Setup automatic updates"
+      ["install_fail2ban"]="Install fail2ban"
+      ["install_recommended_packages"]="Install recommended packages"
+      ["configure_auditd"]="Setup auditd"
+      ["setup_aide"]="Setup aide"
+
+    #
+    # Removals
+    #
+      ["disable_core_dumps"]="Disable core dumps"
+      ["disable_firewire"]="Disable Firewire storage"
+      ["disable_usb"]="Disable USB storage"
+      ["disable_uncommon_filesystems"]="Disable unused filesystems"
+      ["disable_uncommon_protocols"]="Disable uncommon protocols"
+      ["purge_old_packages"]="Purge old packages"
+
+    #
+    # Access Restrictions
+    #
+      ["create_admin_user"]="Create admin user"
+      ["change_root_permissions"]="Change root dir permissions"
+      ["restrict_access_to_compilers"]="Restrict access to compilers"
+      ["move_tmp_to_tmpfs"]="Move tmp to tmpfs"
+      ["secure_ssh"]="Secure ssh"
+      ["restrict_login"]="Restrict login"
+
+    #["reboot"]="Reboot"
+  )
 
 #
 # logic
@@ -30,48 +115,20 @@
     {
       parse_arguments || return 1
 
-      local -Ar dict_command_prompts=(
-        ["apt_update"]="Update and upgrade all packages"
-        ["configure_iptables"]="Configure iptables"
-        ["install_fail2ban"]="Install fail2ban"
-        ["configure_kernel"]="Configure kernel"
-        ["install_unattended_upgrades"]="Setup automatic updates"
-        ["configure_auditd"]="Setup auditd"
-        ["disable_core_dumps"]="Disable core dumps"
-        ["restrict_login"]="Restrict login"
-        ["secure_ssh"]="Secure ssh"
-        ["create_admin_user"]="Create admin user"
-        ["add_legal_banner"]="Add legal banner"
-        ["install_recommended_packages"]="Install recommended packages"
-        ["setup_aide"]="Setup aide"
-        ["enable_process_accounting"]="Enable process accounting"
-        ["disable_uncommon_filesystems"]="Disable unused filesystems"
-        ["disable_firewire"]="Disable firewire"
-        ["disable_usb"]="Disable usb"
-        ["disable_uncommon_protocols"]="Disable uncommon protocols"
-        ["change_root_permissions"]="Change root dir permissions"
-        ["restrict_access_to_compilers"]="Restrict access to compilers"
-        ["move_tmp_to_tmpfs"]="Move tmp to tmpfs"
+      for str_command in ${ARR_COMMANDS[@]}; do
+        local str_value="${DICT_COMMAND_PROMPTS["${str_command}"]}"
 
-        ["remount_dir_with_restrictions"]="Remount /tmp /proc /dev /run to be more "\
-          "restrictive"
-
-        ["purge_old_packages"]="Purge old packages"
-        ["reboot"]="Reboot"
-      )
-
-      for str_key in "${!dict_command_prompts[@]}"; do
-        local str_value="${dict_command_prompts["${str_key}"]}"
-
-        run "${str_key}" "${str_value}"
+        run "${str_command}" "${str_value}"
 
         if [[ "${?}" -eq 1 ]]; then
-          echo -e "$0: Script has failed."
+          echo -e "${SCRIPT_NAME}: Script has failed."
           return 1
         fi
+
+        echo
       done
 
-      echo -e "$0: Script finished successfully."
+      echo -e "${SCRIPT_NAME}: Script finished successfully."
       return 0
     }
 
@@ -125,11 +182,11 @@
       function parse_arguments
       {
         if ! printf "%s\n" "${ARR_ARGUMENTS[@]}" | sort | uniq --repeated; then
-          echo -e "$0: Duplicate argument(s)."
+          echo -e "${SCRIPT_NAME}: Duplicate argument(s)."
           return 1
         fi
 
-        for str_argument in "${ARR_ARGUMENTS[*]}"; do
+        for str_argument in ${ARR_ARGUMENTS[*]}; do
           parse_argument "${str_argument}" || return 1
         done
       }
@@ -147,27 +204,29 @@
         local -r str_command="${1}"
         local -r str_prompt="${2}"
 
-        typeset -f "${str_command}" | tail --lines +2
+        # typeset -f "${str_command}" | tail --lines +2
 
         echo -e "${str_prompt}"
 
         if ! "${BOOL_DO_EVERYTHING}"; then
-          echo -en "$0: Run the above command(s)? [Y/n]: "
+          echo -en "${SCRIPT_NAME}: Run the above command(s)? [Y/n]: "
 
           read -r str_answer
+          echo "'${str_answer}'"
 
-          if [ "${str_answer}" != "${answer#[Yy]}" ] ;then
-            echo -e "$0: Skipped command(s)."
+          if [ "${str_answer}" != "Y" ] \
+            && [ "${str_answer}" != "y" ]; then
+            echo -e "${SCRIPT_NAME}: Skipped command(s)."
             return 255
           fi
         fi
 
-        if ! ${str_command}; then
-          echo -e "$0: Failure."
+        if ! eval ${str_command}; then
+          echo -e "${SCRIPT_NAME}: Failure."
           return 1
         fi
 
-        echo -e "$0: Success."
+        echo -e "${SCRIPT_NAME}: Success."
         return 0
       }
 
@@ -187,7 +246,7 @@
           return 1
         fi
 
-        for str_line in "${ref_arr_output[*]}"; do
+        for str_line in ${ref_arr_output[*]}; do
           echo -e "${str_line}" >> "${str_file_name}" || return 1
         done
       }
