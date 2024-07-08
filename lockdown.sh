@@ -9,11 +9,6 @@
 # Maintainer(s):  Alex Portell <github.com/portellam>
 #
 
-# TODO: review https://en.wikipedia.org/wiki/Package_manager.
-# fixed issues introduced by refactor
-# fixed issues with regards to sysctl syntax, missing install commands, 
-
-
 #
 # parameters
 #
@@ -693,7 +688,6 @@
       {
         # Change /root permissions
           chmod 700 /root || return 1
-          #chmod 750 /home/debian || return 1  # This is likely deprecated.
       }
 
     #
@@ -942,8 +936,6 @@
         uninstall_package \
           "$( dpkg --list | grep '^rc' | awk '{print $2}' )" \
           || return 1
-
-        #apt purge -y "$( dpkg --list | grep '^rc' | awk '{print $2}' )" || return 1  # fails when package no longer exists. Why?
       }
 
     #
