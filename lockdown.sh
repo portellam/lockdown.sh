@@ -10,11 +10,14 @@
 #
 
 # TODO: review https://en.wikipedia.org/wiki/Package_manager.
+# fixed issues introduced by refactor
+# fixed issues with regards to sysctl syntax, missing install commands, 
+
 
 #
 # parameters
 #
-  declare -r SCRIPT_NAME="${0}"
+  declare -r STR_SCRIPT_NAME="${0}"
   declare -a ARR_ARGUMENTS="${*}"
   declare BOOL_DO_EVERYTHING=false
   declare -i INT_SSH_PORT=141
@@ -52,11 +55,11 @@
     #
     # Access Restrictions
     #
+      "secure_ssh"
       "create_admin_user"
       "change_root_permissions"
       "restrict_access_to_compilers"
       "move_tmp_to_tmpfs"
-      "secure_ssh"
       "restrict_login"
   )
 
@@ -64,41 +67,41 @@
     #
     # Additions
     #
-      ["add_legal_banner"]="Add legal banner"
-      ["apt_update"]="Update and upgrade all packages"
-      ["configure_iptables"]="Configure iptables"
-      ["configure_kernel"]="Configure kernel"
-      ["enable_process_accounting"]="Enable process accounting"
-      ["remount_dir_with_restrictions"]="Remount /tmp /proc /dev /run with restrictions"
+      ["add_legal_banner"]="Add legal banner."
+      ["apt_update"]="Update and upgrade all packages."
+      ["configure_iptables"]="Configure iptables."
+      ["configure_kernel"]="Configure kernel."
+      ["enable_process_accounting"]="Enable process accounting."
+      ["remount_dir_with_restrictions"]="Remount /tmp /proc /dev /run with restrictions."
 
     #
     # Installed Packages
     #
-      ["install_unattended_upgrades"]="Setup automatic updates"
-      ["install_fail2ban"]="Install fail2ban"
-      ["install_recommended_packages"]="Install recommended packages"
-      ["configure_auditd"]="Setup auditd"
-      ["setup_aide"]="Setup aide"
+      ["install_unattended_upgrades"]="Setup automatic updates."
+      ["install_fail2ban"]="Install fail2ban."
+      ["install_recommended_packages"]="Install recommended packages."
+      ["configure_auditd"]="Setup Auditd."
+      ["setup_aide"]="Setup Advanced Intrusion Detection Environment (AIDE)."
 
     #
     # Removals
     #
-      ["disable_core_dumps"]="Disable core dumps"
-      ["disable_firewire"]="Disable Firewire storage"
-      ["disable_usb"]="Disable USB storage"
-      ["disable_uncommon_filesystems"]="Disable unused filesystems"
-      ["disable_uncommon_protocols"]="Disable uncommon protocols"
-      ["purge_old_packages"]="Purge old packages"
+      ["disable_core_dumps"]="Disable core dumps."
+      ["disable_firewire"]="Disable Firewire storage."
+      ["disable_usb"]="Disable USB storage."
+      ["disable_uncommon_filesystems"]="Disable unused filesystems."
+      ["disable_uncommon_protocols"]="Disable uncommon protocols."
+      ["purge_old_packages"]="Purge old packages."
 
     #
     # Access Restrictions
     #
-      ["create_admin_user"]="Create admin user"
-      ["change_root_permissions"]="Change root dir permissions"
-      ["restrict_access_to_compilers"]="Restrict access to compilers"
-      ["move_tmp_to_tmpfs"]="Move tmp to tmpfs"
-      ["secure_ssh"]="Secure ssh"
-      ["restrict_login"]="Restrict login"
+      ["create_admin_user"]="Create admin user."
+      ["change_root_permissions"]="Change root directory permissions."
+      ["restrict_access_to_compilers"]="Restrict access to compilers."
+      ["move_tmp_to_tmpfs"]="Move /tmp to tmpfs."
+      ["secure_ssh"]="Secure SSH."
+      ["restrict_login"]="Restrict login."
 
     #["reboot"]="Reboot"
   )
@@ -121,20 +124,43 @@
         run "${str_command}" "${str_value}"
 
         if [[ "${?}" -eq 1 ]]; then
-          echo -e "${SCRIPT_NAME}: Script has failed."
+          echo -e "${STR_SCRIPT_NAME}: Script has failed."
           return 1
         fi
 
         echo
       done
 
-      echo -e "${SCRIPT_NAME}: Script finished successfully."
+      echo -e "${STR_SCRIPT_NAME}: Script finished successfully."
       return 0
     }
 
   #
   # DESC: Helpers
   #
+    #
+    # DESC:   Does the package exist in cache?
+    # $1:     the package name as a string.
+    # RETURN: If the package exists, return 0.
+    #         If not, return 1.
+    #
+      function does_package_exist_in_cache
+      {
+        if [[ -z "${1}" ]]; then
+          return 1
+        fi
+
+        local -r str_result="$( \
+          apt-cache search --names-only "${1}" | grep "${1}"
+        )"
+
+        if [[ -z "${str_result}" ]]; then
+          return 1
+        fi
+
+        return 0
+      }
+
     #
     # DESC:   Overwrite output to file.
     # $1:     the output as an array reference.
@@ -147,7 +173,7 @@
         local -n ref_arr_output="${1}"
         local -r str_file_name="${2}"
 
-        echo > "${str_file_name}"
+        rm --force "${str_file_name}" || return 1
         write_file "arr_output" "${str_file_name}" || return 1
       }
 
@@ -182,7 +208,7 @@
       function parse_arguments
       {
         if ! printf "%s\n" "${ARR_ARGUMENTS[@]}" | sort | uniq --repeated; then
-          echo -e "${SCRIPT_NAME}: Duplicate argument(s)."
+          echo -e "${STR_SCRIPT_NAME}: Duplicate argument(s)."
           return 1
         fi
 
@@ -209,24 +235,22 @@
         echo -e "${str_prompt}"
 
         if ! "${BOOL_DO_EVERYTHING}"; then
-          echo -en "${SCRIPT_NAME}: Run the above command(s)? [Y/n]: "
-
+          echo -en "${STR_SCRIPT_NAME}: Run the above command(s)? [Y/n]: "
           read -r str_answer
-          echo "'${str_answer}'"
 
           if [ "${str_answer}" != "Y" ] \
             && [ "${str_answer}" != "y" ]; then
-            echo -e "${SCRIPT_NAME}: Skipped command(s)."
+            echo -e "${STR_SCRIPT_NAME}: Skipped command(s)."
             return 255
           fi
         fi
 
         if ! eval ${str_command}; then
-          echo -e "${SCRIPT_NAME}: Failure."
+          echo -e "${STR_SCRIPT_NAME}: Failure."
           return 1
         fi
 
-        echo -e "${SCRIPT_NAME}: Success."
+        echo -e "${STR_SCRIPT_NAME}: Success."
         return 0
       }
 
@@ -246,7 +270,7 @@
           return 1
         fi
 
-        for str_line in ${ref_arr_output[*]}; do
+        for str_line in "${ref_arr_output[@]}"; do
           echo -e "${str_line}" >> "${str_file_name}" || return 1
         done
       }
@@ -267,8 +291,8 @@
           "Legal action will be taken. Disconnect now."
         )
 
-        write_file "arr_output" "/etc/issue" || return 1
-        write_file "arr_output" "/etc/issue.net" || return 1
+        overwrite_file "arr_output" "/etc/issue" || return 1
+        overwrite_file "arr_output" "/etc/issue.net" || return 1
       }
 
     #
@@ -522,40 +546,47 @@
       function configure_kernel
       {
         local -ar arr_output=(
-          "net.ipv4.conf.all.accept_redirects: 0"
-          "net.ipv4.conf.all.accept_source_route: 0"
-          "net.ipv4.conf.all.log_martians: 1"
-          "net.ipv4.conf.all.rp_filter: 1"
-          "net.ipv4.conf.all.secure_redirects: 1"
-          "net.ipv4.conf.all.send_redirects: 0"
-          "net.ipv4.conf.default.accept_redirects: 0"
-          "net.ipv4.conf.default.accept_source_route: 0"
-          "net.ipv4.conf.default.log_martians: 1"
-          "net.ipv4.conf.default.rp_filter: 1"
-          "net.ipv4.conf.default.secure_redirects: 1"
-          "net.ipv4.conf.default.send_redirects: 0"
-          "net.ipv4.icmp_echo -e_ignore_broadcasts: 1"
-          "net.ipv4.icmp_ignore_bogus_error_responses: 1"
-          "net.ipv4.icmp_echo -e_ignore_all: 0"
-          "net.ipv4.ip_forward: 0"
-          "net.ipv4.tcp_rfc1337: 1"
-          "net.ipv4.tcp_syncookies: 1"
-          "net.ipv6.conf.all.accept_redirects: 0"
-          "net.ipv6.conf.all.forwarding: 0"
-          "net.ipv6.conf.all.accept_source_route: 0"
-          "net.ipv6.conf.default.accept_redirects: 0"
-          "net.ipv6.conf.default.accept_source_route: 0"
-          "fs.protected_hardlinks: 1"
-          "fs.protected_symlinks: 1"
-          "kernel.core_uses_pid: 1"
-          "kernel.perf_event_paranoid: 2"
-          "kernel.kptr_restrict: 2"
-          "kernel.randomize_va_space: 2"
-          "kernel.sysrq: 0"
-          "kernel.yama.ptrace_scope: 1"
+          "# File system"
+          "fs.protected_hardlinks = 1"
+          "fs.protected_symlinks = 1"
+          ""
+          "# Kernel"
+          "kernel.core_uses_pid = 1"
+          "kernel.perf_event_paranoid = 2"
+          "kernel.kptr_restrict = 2"
+          "kernel.randomize_va_space = 2"
+          "kernel.sysrq = 0"
+          "kernel.yama.ptrace_scope = 1"
+          ""
+          "# Network settings (IPv4)"
+          "net.ipv4.conf.all.accept_redirects = 0"
+          "net.ipv4.conf.all.accept_source_route = 0"
+          "net.ipv4.conf.all.log_martians = 1"
+          "net.ipv4.conf.all.rp_filter = 1"
+          "net.ipv4.conf.all.secure_redirects = 1"
+          "net.ipv4.conf.all.send_redirects = 0"
+          "net.ipv4.conf.default.accept_redirects = 0"
+          "net.ipv4.conf.default.accept_source_route = 0"
+          "net.ipv4.conf.default.log_martians = 1"
+          "net.ipv4.conf.default.rp_filter = 1"
+          "net.ipv4.conf.default.secure_redirects = 1"
+          "net.ipv4.conf.default.send_redirects = 0"
+          "net.ipv4.icmp_echo -e_ignore_broadcasts = 1"
+          "net.ipv4.icmp_ignore_bogus_error_responses = 1"
+          "net.ipv4.icmp_echo -e_ignore_all = 0"
+          "net.ipv4.ip_forward = 0"
+          "net.ipv4.tcp_rfc1337 = 1"
+          "net.ipv4.tcp_syncookies = 1"
+          ""
+          "# Network settings (IPv6)"
+          "net.ipv6.conf.all.accept_redirects = 0"
+          "net.ipv6.conf.all.forwarding = 0"
+          "net.ipv6.conf.all.accept_source_route = 0"
+          "net.ipv6.conf.default.accept_redirects = 0"
+          "net.ipv6.conf.default.accept_source_route = 0"
         )
 
-        write_file "arr_output" "/etc/sysctl.d/80-lockdown.conf" || return 1
+        overwrite_file "arr_output" "/etc/sysctl.d/80-lockdown.conf" || return 1
         sysctl --system || return 1
       }
 
@@ -566,28 +597,22 @@
     #
       function enable_process_accounting
       {
+        # Install process accounting
+        install_package "acct" || return 1
+
         # Enable process accounting
         systemctl enable acct.service || return 1
         systemctl start acct.service || return 1
       }
 
     #
-    # DESC:   Install recommended packages.
+    # DESC:   Install unattended-upgrades.
     # RETURN: Return code from last statement.
     #
-      function install_recommended_packages
+      function install_unattended_upgrades
       {
-        # Install recommended packages
-          install_package \
-            "acct" \
-            "aide" \
-            "apt-listbugs" \
-            "apt-listchanges" \
-            "debsecan" \
-            "debsums" \
-            "libpam-cracklib" \
-            "needrestart" \
-            "usbguard"
+        # Enable automatic updates
+        install_package "unattended-upgrades"
       }
 
     #
@@ -628,28 +653,36 @@
     # RETURN: If successful, return 0.
     #         If not successful, return 1.
     #
-    function create_admin_user
-    {
-      # Create admin user
-      echo -e -n "Enter admin username: " || return 1
-      read -r str_username || return 1
-      adduser "${str_username}" || return 1
-      mkdir "/home/${str_username}/.ssh" || return 1
+      function create_admin_user
+      {
+        # Create admin user
+        echo -e -n "Enter admin username: " || return 1
+        read -r str_username || return 1
 
-      cp /root/.ssh/authorized_keys "/home/${str_username}/.ssh/authorized_keys" \
-        || return 1
+        if ! getent passwd $1 > /dev/null 2&>1; then
+          adduser "${str_username}" || return 1
+        fi
 
-      chown --recursive "${str_username}" "/home/${str_username}/.ssh" || return 1
-      usermod --append --groups sudo "${str_username}" || return 1
+        mkdir --parents "/home/${str_username}/.ssh" || return 1
 
-      # Restrict ssh to admin user
-      local -ar arr_output=(
-        "AllowUsers ${str_username}"
-        "PermitRootLogin no"
-      )
+        local -r str_keys_path="/root/.ssh/authorized_keys"
 
-      write_file "arr_output" "/etc/ssh/sshd_config" || return 1
-    }
+        if [[ -e "${str_keys_path}" ]]; then
+          cp "" "/home/${str_username}/.ssh/authorized_keys" \
+          || return 1
+        fi
+
+        chown --recursive "${str_username}" "/home/${str_username}/.ssh" || return 1
+        usermod --append --groups sudo "${str_username}" || return 1
+
+        # Restrict ssh to admin user
+        local -ar arr_output=(
+          "AllowUsers ${str_username}"
+          "PermitRootLogin no"
+        )
+
+        write_file "arr_output" "/etc/ssh/sshd_config" || return 1
+      }
 
     #
     # DESC:   Modify root permissions.
@@ -660,7 +693,7 @@
       {
         # Change /root permissions
           chmod 700 /root || return 1
-          chmod 750 /home/debian || return 1
+          #chmod 750 /home/debian || return 1  # This is likely deprecated.
       }
 
     #
@@ -725,31 +758,44 @@
   #
   # DESC: Installs
   #
+    #
     # DESC:   Install a package and determine if it was installed.
+    # $*:     the packages to install as a space-delimited string.
     # RETURN: If successful, return 0.
     #         If not successful, return 1.
     #
       function install_package
       {
-        local -i int_counter=1
-        local -r str_package_name_delim="${1}"
+        apt update || return 1
 
-        apt install -y "${str_package_name_delim}" || return 1
+        local str_packages_delim=""
 
-        while true; do
-          local str_this_package_name=$( \
-            echo "${1}" | cut --delimiter ' ' --field "${int_counter}"
-          )
-
-          if [[ "${str_this_package_name}" -eq "" ]]; then
+        for str_package in ${*}; do
+          if [[ -z "${str_package}" ]]; then
             break
           fi
 
-          dpkg --status "${str_package_name}" | \
-            perl -ne 'print if /Status/ && /install/' \
-            || return 1
+          if does_package_exist_in_cache "${str_package}"; then
+            continue
+          fi
 
-          (( int_counter++ ))
+          str_packages_delim+=" ${str_package}"
+        done
+
+        apt install "${str_package_delim}" || return 1
+
+        for str_package in ${*}; do
+          if [[ -z "${str_package}" ]]; then
+            break
+          fi
+
+          if does_package_exist_in_cache "${str_package}"; then
+            continue
+          fi
+
+          dpkg --status "${str_package}" | \
+            perl -ne 'print if /Status/ && /install/'  &> /dev/null \
+            || return 1
         done
       }
 
@@ -763,14 +809,24 @@
       }
 
     #
-    # DESC:   Install unattended-upgrades.
+    # DESC:   Install recommended packages.
     # RETURN: Return code from last statement.
     #
-      function install_unattended_upgrades
+      function install_recommended_packages
       {
-        # Enable automatic updates
-        install_package "unattended-upgrades"
+        # Install recommended packages
+          install_package \
+            "acct" \
+            "aide" \
+            "apt-listbugs" \
+            "apt-listchanges" \
+            "debsecan" \
+            "debsums" \
+            "libpam-cracklib" \
+            "needrestart" \
+            "usbguard"
       }
+
 
     #
     # DESC:   Setup Advanced Intrusion Detection Environment (AIDE).
@@ -779,6 +835,14 @@
     #
       function setup_aide
       {
+        echo
+
+        local str_output="This may take a long time. By default, AIDE will scan "
+        str_output+="all directories inside the root filesystem. Before continuing,"
+        str_output+="please review and modify the .conf files within '/etc/aide/'."
+
+        run "" "${str_output}" || return 0
+
         # Setup aide
         aideinit || return 1
         mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db || return 1
@@ -821,7 +885,7 @@
           "install squashfs /bin/true"
         )
 
-        write_file "arr_output" "/etc/modprobe.d/filesystems.conf" || return 1
+        overwrite_file "arr_output" "/etc/modprobe.d/filesystems.conf" || return 1
       }
 
     #
@@ -837,7 +901,7 @@
           "blacklist firewire-sbp2"
         )
 
-        write_file "arr_output" "/etc/modprobe.d/blacklist.conf" || return 1
+        overwrite_file "arr_output" "/etc/modprobe.d/blacklist-firewire.conf" || return 1
       }
 
     #
@@ -874,9 +938,55 @@
       {
         # Purge old/removed packages
         apt autoremove -y || return 1
-        apt purge -y "$( dpkg --list | grep '^rc' | awk '{print $2}' )" || return 1
+
+        uninstall_package \
+          "$( dpkg --list | grep '^rc' | awk '{print $2}' )" \
+          || return 1
+
+        #apt purge -y "$( dpkg --list | grep '^rc' | awk '{print $2}' )" || return 1  # fails when package no longer exists. Why?
       }
 
+    #
+    # DESC:   Uninstall a package and determine if it was uninstalled.
+    # $*:     the packages to uninstall as a space-delimited string.
+    # RETURN: If successful, return 0.
+    #         If not successful, return 1.
+    #
+      function uninstall_package
+      {
+        apt update || return 1
+
+        local str_packages_delim=""
+
+        for str_package in ${*}; do
+          if [[ -z "${str_package}" ]]; then
+            break
+          fi
+
+          if does_package_exist_in_cache "${str_package}"; then
+            continue
+          fi
+
+          str_packages_delim+=" ${str_package}"
+        done
+
+        echo "${str_package_delim}"
+        apt remove "${str_package_delim}" || return 1
+
+        for str_package in ${*}; do
+          if [[ -z "${str_package}" ]]; then
+            break
+          fi
+
+          if does_package_exist_in_cache "${str_package}"; then
+            continue
+          fi
+
+          dpkg --status "${str_package}" | \
+            perl -ne 'print if /Status/ && /deinstall/'  &> /dev/null \
+            || return 1
+        done
+      }
 #
 # Main
 #
