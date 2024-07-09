@@ -32,8 +32,9 @@ can be built upon for specific needs.
 the created admin user if an admin user is created.
 
 ### 3. Supported Operating Systems
-- Debian 8 Jessie
+- Debian 12 Bookworm
 - Debian 10 Buster
+- Debian 8 Jessie
 
 **!** Debian-based operating systems should be supported:
   Ubuntu, Linux Mint, and Pop! OS.
@@ -95,6 +96,7 @@ chmod +x ./lockdown.sh
 - Installs and sets up [aide](#1).
 - Installs [fail2ban](#3).
 - Installs packages recommended by [lynis](#4).
+- Installs [usbguard](#5).
 
 #### 6.3. Removals
 - Disables core dumps.
@@ -107,9 +109,11 @@ chmod +x ./lockdown.sh
 - Create a new admin user.
 - Restricts access to `/root`.
 - Restrict access to compilers.
-- Restricts firewall to only allow ssh on `141`.
+- Restricts firewall to only allow SSH on `141`.
 - Restricts logins.
-- Restricts ssh and enables only the created admin user.
+- Restricts SSH and enables only the created admin user.
+- usbguard: whitelist current devices.
+- usbguard: whitelist all devices.
 
 ### 7. Contact
 Did you encounter a bug? Do you need help? Please visit the **Issues page**
@@ -134,3 +138,7 @@ https://www.fail2ban.org.
 #### 4.
 **CISOfy/lynis**. GitHub. Accessed July 2, 2024.
 https://github.com/CISOfy/lynis.
+
+#### 5.
+**USBGuard/usbguard**. GitHub. Accessed July 8, 2024.
+https://github.com/USBGuard/usbguard.
