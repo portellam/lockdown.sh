@@ -29,11 +29,21 @@
       "remount_dir_with_restrictions"
 
     #
-    # Installed Packages
+    # Installed Packages (1/2)
     #
       "install_unattended_upgrades"
       "install_fail2ban"
       "install_recommended_packages"
+
+    #
+    # Access Restrictions (1/2)
+    #
+      "usbguard_whitelist_current_devices"
+      "usbguard_whitelist_any_device"
+
+    #
+    # Installed Packages (2/2)
+    #
       "configure_auditd"
       "setup_aide"
 
@@ -48,7 +58,7 @@
       "purge_old_packages"
 
     #
-    # Access Restrictions
+    # Access Restrictions (2/2)
     #
       "secure_ssh"
       "create_admin_user"
@@ -56,8 +66,8 @@
       "restrict_access_to_compilers"
       "move_tmp_to_tmpfs"
       "restrict_login"
-      "usbguard_whitelist_current_devices"
-      "usbguard_whitelist_any_device"
+
+    "reboot"
   )
 
   declare -Ar DICT_COMMAND_PROMPTS=(
