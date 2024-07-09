@@ -9,11 +9,6 @@
 # Maintainer(s):  Alex Portell <github.com/portellam>
 #
 
-# TODO: review https://en.wikipedia.org/wiki/Package_manager.
-# fixed issues introduced by refactor
-# fixed issues with regards to sysctl syntax, missing install commands, 
-
-
 #
 # parameters
 #
@@ -34,11 +29,21 @@
       "remount_dir_with_restrictions"
 
     #
-    # Installed Packages
+    # Installed Packages (1/2)
     #
       "install_unattended_upgrades"
       "install_fail2ban"
       "install_recommended_packages"
+
+    #
+    # Access Restrictions (1/2)
+    #
+      "usbguard_whitelist_current_devices"
+      "usbguard_whitelist_any_device"
+
+    #
+    # Installed Packages (2/2)
+    #
       "configure_auditd"
       "setup_aide"
 
@@ -53,7 +58,7 @@
       "purge_old_packages"
 
     #
-    # Access Restrictions
+    # Access Restrictions (2/2)
     #
       "secure_ssh"
       "create_admin_user"
@@ -61,6 +66,8 @@
       "restrict_access_to_compilers"
       "move_tmp_to_tmpfs"
       "restrict_login"
+
+    "reboot"
   )
 
   declare -Ar DICT_COMMAND_PROMPTS=(
@@ -102,8 +109,10 @@
       ["move_tmp_to_tmpfs"]="Move /tmp to tmpfs."
       ["secure_ssh"]="Secure SSH."
       ["restrict_login"]="Restrict login."
+      ["usbguard_whitelist_current_devices"]="USBGuard: Whitelist current devices."
+      ["usbguard_whitelist_any_device"]="USBGuard: Whitelist all devices."
 
-    #["reboot"]="Reboot"
+    ["reboot"]="Reboot"
   )
 
 #
@@ -693,7 +702,6 @@
       {
         # Change /root permissions
           chmod 700 /root || return 1
-          #chmod 750 /home/debian || return 1  # This is likely deprecated.
       }
 
     #
@@ -734,7 +742,6 @@
       function secure_ssh
       {
         # Secure ssh
-
         local -r str_file="/etc/ssh/sshd_config"
 
         local -ar arr_output=(
@@ -827,7 +834,6 @@
             "usbguard"
       }
 
-
     #
     # DESC:   Setup Advanced Intrusion Detection Environment (AIDE).
     # RETURN: If successful, return 0.
@@ -835,13 +841,13 @@
     #
       function setup_aide
       {
-        echo
-
         local str_output="This may take a long time. By default, AIDE will scan "
         str_output+="all directories inside the root filesystem. Before continuing,"
         str_output+="please review and modify the .conf files within '/etc/aide/'."
 
+        echo
         run "" "${str_output}" || return 0
+        echo
 
         # Setup aide
         aideinit || return 1
@@ -926,7 +932,27 @@
     #
       function disable_usb
       {
-        echo -e "blacklist usb-storage" >> "/etc/modprobe.d/blacklist.conf"
+        echo -e "blacklist usb-storage" > "/etc/modprobe.d/blacklist-usb.conf"
+      }
+
+    #
+    # DESC:   Whitelist current USB devices.
+    # RETURN: Return code from last statement.
+    #
+      function usbguard_whitelist_current_devices
+      {
+        sudo sh -c 'usbguard generate-policy > /etc/usbguard/rules.conf'
+      }
+
+    #
+    # DESC:   Whitelist current USB devices.
+    # RETURN: Return code from last statement.
+    #
+      function usbguard_whitelist_all_devices
+      {
+        for str_device_path in /sys/bus/usb/devices/*/authorized; do
+          echo 1 > "${str_device_path}" || return 1
+        done
       }
 
     #
@@ -942,8 +968,6 @@
         uninstall_package \
           "$( dpkg --list | grep '^rc' | awk '{print $2}' )" \
           || return 1
-
-        #apt purge -y "$( dpkg --list | grep '^rc' | awk '{print $2}' )" || return 1  # fails when package no longer exists. Why?
       }
 
     #
@@ -987,6 +1011,7 @@
             || return 1
         done
       }
+
 #
 # Main
 #
