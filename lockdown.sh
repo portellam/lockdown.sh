@@ -88,7 +88,7 @@
       ["install_unattended_upgrades"]="Setup automatic updates."
       ["install_fail2ban"]="Install fail2ban."
       ["install_recommended_packages"]="Install recommended packages."
-      ["install_usbguard"]="Install USBGuard."
+      ["install_usbguard"]="Install usbguard."
       ["configure_auditd"]="Setup Auditd."
       ["setup_aide"]="Setup Advanced Intrusion Detection Environment (AIDE)."
 
@@ -111,8 +111,8 @@
       ["move_tmp_to_tmpfs"]="Move /tmp to tmpfs."
       ["secure_ssh"]="Secure SSH."
       ["restrict_login"]="Restrict login."
-      ["usbguard_whitelist_current_devices"]="USBGuard: Whitelist current devices."
-      ["usbguard_whitelist_all_devices"]="USBGuard: Whitelist all devices."
+      ["usbguard_whitelist_current_devices"]="usbguard: Whitelist current devices."
+      ["usbguard_whitelist_all_devices"]="usbguard: Whitelist all devices."
 
     ["reboot"]="Reboot"
   )
@@ -866,7 +866,7 @@
       }
 
     #
-    # DESC:   Install USBGuard.
+    # DESC:   Install usbguard.
     # RETURN: Return code from last statement.
     #
       function install_usbguard
@@ -875,18 +875,14 @@
           "usbguard" \
           || return 1
 
-        if ! "$( command -v usbguard )" &> /dev/null ; then
-          return 1
-        fi
-
-        # In case USBGuard is setup without any whitelisted devices.
+        # In case usbguard is setup without any whitelisted devices.
           systemctl disable usbguard || return 1
           systemctl stop usbguard || return 1
 
-        echo -e "${STR_SCRIPT_NAME}: Disabled USBGuard." \
-          "Please whitelist devices before re-enabling USBGuard."
+        echo -e "${STR_SCRIPT_NAME}: Disabled usbguard." \
+          "Please whitelist devices before re-enabling usbguard."
 
-        echo -e "${STR_SCRIPT_NAME}: To re-enable, please run:" \
+        echo -e "${STR_SCRIPT_NAME}: To re-enable, run:" \
 
         echo "\"systemctl enable usbguard\""
         echo "\"systemctl start usbguard\""
