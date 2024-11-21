@@ -34,6 +34,7 @@
       "install_unattended_upgrades"
       "install_fail2ban"
       "install_recommended_packages"
+      "install_usbguard"
 
     #
     # Access Restrictions (1/2)
@@ -87,6 +88,7 @@
       ["install_unattended_upgrades"]="Setup automatic updates."
       ["install_fail2ban"]="Install fail2ban."
       ["install_recommended_packages"]="Install recommended packages."
+      ["install_usbguard"]="Install USBGuard."
       ["configure_auditd"]="Setup Auditd."
       ["setup_aide"]="Setup Advanced Intrusion Detection Environment (AIDE)."
 
@@ -296,7 +298,7 @@
       {
         # Add legal banner
         local -a arr_output=(
-          "Unauthorized access to this server is prohibited"
+          "Unauthorized access to this server is prohibited."
           "Legal action will be taken. Disconnect now."
         )
 
@@ -543,6 +545,9 @@
         iptables -A INPUT -p tcp --syn --dport "${INT_SSH_PORT}" -m connlimit \
           --connlimit-above 2 -j REJECT
 
+	# Allow cockpit
+	iptables -A INPUT -p tcp -m tcp --dport 9090 -j ACCEPT
+
         iptables-save > "/etc/iptables/rules.v4" || return 1
         ip6tables-save > "/etc/iptables/rules.v6" || return 1
       }
@@ -631,7 +636,12 @@
       function move_tmp_to_tmpfs
       {
         # Move tmp to tmpfs
-        echo -e "tmpfs /tmp tmpfs rw,nosuid,nodev" >> "/etc/fstab"
+        if [[ -d "/tmp" ]]; then
+          echo -e "tmpfs /tmp tmpfs rw,nosuid,nodev" >> "/etc/fstab"
+
+        else
+          echo "Skipped."
+        fi
       }
 
     #
@@ -642,16 +652,36 @@
       function remount_dir_with_restrictions
       {
         # Mount tmp with noexec
-        mount --options remount,noexec /tmp || return 1
+        if [[ -d "/tmp" ]]; then
+          mount --options remount,noexec /tmp || return 1
+
+        else
+          echo "Skipped."
+        fi
 
         # Mount /proc with hidepid=2
-        mount --options remount,rw,hidepid=2 /proc || return 1
+        if [[ -d "/proc" ]]; then
+          mount --options remount,rw,hidepid=2 /proc || return 1
+
+        else
+          echo "Skipped."
+        fi
 
         # Mount /dev with noexec
-        mount --options remount,noexec /dev || return 1
+        if [[ -d "/dev" ]]; then
+          mount --options remount,noexec /dev || return 1
+
+        else
+          echo "Skipped."
+        fi
 
         # Mount /run as nodev
-        mount --options remount,nodev /run || return 1
+        if [[ -d "/run" ]]; then
+          mount --options remount,nodev /run || return 1
+
+        else
+          echo "Skipped."
+        fi
       }
 
   #
@@ -830,8 +860,33 @@
             "debsecan" \
             "debsums" \
             "libpam-cracklib" \
-            "needrestart" \
-            "usbguard"
+            "needrestart"
+      }
+
+    #
+    # DESC:   Install USBGuard.
+    # RETURN: Return code from last statement.
+    #
+      function install_usbguard
+      {
+        install_package \
+          "usbguard" \
+          || return 1
+
+        if ! "$( command -v usbguard &> /dev/null )"; then
+          return 1
+        fi
+
+        # In case USBGuard is setup without any whitelisted devices.
+          systemctl disable usbguard || return 1
+          systemctl stop usbguard || return 1
+
+        echo -e "Disabled USBGuard. Please whitelist devices before re-enabling" \
+        "USBGuard. To re-enable, please run:\n" \
+        "\"systemctl enable usbguard\"\n" \
+        "\"systemctl start usbguard\"\n"
+
+        return 0
       }
 
     #
@@ -941,6 +996,10 @@
     #
       function usbguard_whitelist_current_devices
       {
+        if ! "$( command -v usbguard &> /dev/null )"; then
+          return 0
+        fi
+
         sudo sh -c 'usbguard generate-policy > /etc/usbguard/rules.conf'
       }
 
@@ -950,6 +1009,10 @@
     #
       function usbguard_whitelist_all_devices
       {
+        if ! "$( command -v usbguard &> /dev/null )"; then
+          return 0
+        fi
+
         for str_device_path in /sys/bus/usb/devices/*/authorized; do
           echo 1 > "${str_device_path}" || return 1
         done
