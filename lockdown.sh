@@ -40,7 +40,7 @@
     # Access Restrictions (1/2)
     #
       "usbguard_whitelist_current_devices"
-      "usbguard_whitelist_any_device"
+      "usbguard_whitelist_all_devices"
 
     #
     # Installed Packages (2/2)
@@ -112,7 +112,7 @@
       ["secure_ssh"]="Secure SSH."
       ["restrict_login"]="Restrict login."
       ["usbguard_whitelist_current_devices"]="USBGuard: Whitelist current devices."
-      ["usbguard_whitelist_any_device"]="USBGuard: Whitelist all devices."
+      ["usbguard_whitelist_all_devices"]="USBGuard: Whitelist all devices."
 
     ["reboot"]="Reboot"
   )
@@ -545,8 +545,10 @@
         iptables -A INPUT -p tcp --syn --dport "${INT_SSH_PORT}" -m connlimit \
           --connlimit-above 2 -j REJECT
 
-	# Allow cockpit
-	iptables -A INPUT -p tcp -m tcp --dport 9090 -j ACCEPT
+        # Allow cockpit
+        if "$( command -v cockpit )" &> /dev/null; then
+          iptables -A INPUT -p tcp -m tcp --dport 9090 -j ACCEPT
+        fi
 
         iptables-save > "/etc/iptables/rules.v4" || return 1
         ip6tables-save > "/etc/iptables/rules.v6" || return 1
