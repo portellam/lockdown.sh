@@ -158,7 +158,7 @@
       function does_package_exist_in_cache
       {
         if [[ -z "${1}" ]]; then
-          return 1
+          return 0
         fi
 
         local -r str_result="$( \
@@ -241,7 +241,7 @@
         local -r str_command="${1}"
         local -r str_prompt="${2}"
 
-        # typeset -f "${str_command}" | tail --lines +2
+        # typeset -f "${str_command}" | tail --lines +2 #NOTE: what does this do?
 
         echo -e "${str_prompt}"
 
@@ -819,7 +819,7 @@
           str_packages_delim+=" ${str_package}"
         done
 
-        apt install "${str_package_delim}" || return 1
+        apt install -y "${str_package_delim}" || return 1
 
         for str_package in ${*}; do
           if [[ -z "${str_package}" ]]; then
@@ -873,7 +873,7 @@
           "usbguard" \
           || return 1
 
-        if ! "$( command -v usbguard &> /dev/null )"; then
+        if ! "$( command -v usbguard )" &> /dev/null ; then
           return 1
         fi
 
@@ -996,7 +996,7 @@
     #
       function usbguard_whitelist_current_devices
       {
-        if ! "$( command -v usbguard &> /dev/null )"; then
+        if ! "$( command -v usbguard )" &> /dev/null; then
           return 0
         fi
 
@@ -1009,7 +1009,7 @@
     #
       function usbguard_whitelist_all_devices
       {
-        if ! "$( command -v usbguard &> /dev/null )"; then
+        if ! "$( command -v usbguard )" &> /dev/null; then
           return 0
         fi
 
