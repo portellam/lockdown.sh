@@ -814,24 +814,30 @@
             break
           fi
 
+          # FIXME
+          # if does_package_exist_in_cache "${str_package}"; then
+          #   continue
+          # fi
+
           str_packages_delim+=" ${str_package}"
         done
 
         apt install -y "${str_packages_delim}" || return 1
 
-        for str_package in ${*}; do
-          if [[ -z "${str_package}" ]]; then
-            break
-          fi
+        # FIXME
+        # for str_package in ${*}; do
+        #   if [[ -z "${str_package}" ]]; then
+        #     break
+        #   fi
 
-          if does_package_exist_in_cache "${str_package}"; then
-            continue
-          fi
+        #   if does_package_exist_in_cache "${str_package}"; then
+        #     continue
+        #   fi
 
-          dpkg --status "${str_package}" | \
-            perl -ne 'print if /Status/ && /install/'  &> /dev/null \
-            || return 1
-        done
+        #   dpkg --status "${str_package}" | \
+        #     perl -ne 'print if /Status/ && /install/'  &> /dev/null \
+        #     || return 1
+        # done
       }
 
     #
