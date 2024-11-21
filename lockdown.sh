@@ -2,7 +2,7 @@
 
 #
 # Filename:       lockdown.sh
-# Version:        1.0.1
+# Version:        1.0.2
 # Description:    Lockdown your Linux install. The simple zero-config Linux
 #                 hardening script.
 # Author(s):      Dom Ginger <github.com/dolegi>
@@ -34,12 +34,13 @@
       "install_unattended_upgrades"
       "install_fail2ban"
       "install_recommended_packages"
+      "install_usbguard"
 
     #
     # Access Restrictions (1/2)
     #
       "usbguard_whitelist_current_devices"
-      "usbguard_whitelist_any_device"
+      "usbguard_whitelist_all_devices"
 
     #
     # Installed Packages (2/2)
@@ -87,6 +88,7 @@
       ["install_unattended_upgrades"]="Setup automatic updates."
       ["install_fail2ban"]="Install fail2ban."
       ["install_recommended_packages"]="Install recommended packages."
+      ["install_usbguard"]="Install USBGuard."
       ["configure_auditd"]="Setup Auditd."
       ["setup_aide"]="Setup Advanced Intrusion Detection Environment (AIDE)."
 
@@ -110,7 +112,7 @@
       ["secure_ssh"]="Secure SSH."
       ["restrict_login"]="Restrict login."
       ["usbguard_whitelist_current_devices"]="USBGuard: Whitelist current devices."
-      ["usbguard_whitelist_any_device"]="USBGuard: Whitelist all devices."
+      ["usbguard_whitelist_all_devices"]="USBGuard: Whitelist all devices."
 
     ["reboot"]="Reboot"
   )
@@ -156,7 +158,7 @@
       function does_package_exist_in_cache
       {
         if [[ -z "${1}" ]]; then
-          return 1
+          return 0
         fi
 
         local -r str_result="$( \
@@ -239,7 +241,7 @@
         local -r str_command="${1}"
         local -r str_prompt="${2}"
 
-        # typeset -f "${str_command}" | tail --lines +2
+        # typeset -f "${str_command}" | tail --lines +2 #NOTE: what does this do?
 
         echo -e "${str_prompt}"
 
@@ -296,7 +298,7 @@
       {
         # Add legal banner
         local -a arr_output=(
-          "Unauthorized access to this server is prohibited"
+          "Unauthorized access to this server is prohibited."
           "Legal action will be taken. Disconnect now."
         )
 
@@ -543,6 +545,11 @@
         iptables -A INPUT -p tcp --syn --dport "${INT_SSH_PORT}" -m connlimit \
           --connlimit-above 2 -j REJECT
 
+        # Allow cockpit
+        if "$( command -v cockpit )" &> /dev/null; then
+          iptables -A INPUT -p tcp -m tcp --dport 9090 -j ACCEPT
+        fi
+
         iptables-save > "/etc/iptables/rules.v4" || return 1
         ip6tables-save > "/etc/iptables/rules.v6" || return 1
       }
@@ -580,9 +587,9 @@
           "net.ipv4.conf.default.rp_filter = 1"
           "net.ipv4.conf.default.secure_redirects = 1"
           "net.ipv4.conf.default.send_redirects = 0"
-          "net.ipv4.icmp_echo -e_ignore_broadcasts = 1"
+          "net.ipv4.icmp_echo_ignore_broadcasts = 1"
           "net.ipv4.icmp_ignore_bogus_error_responses = 1"
-          "net.ipv4.icmp_echo -e_ignore_all = 0"
+          "net.ipv4.icmp_echo_ignore_all = 0"
           "net.ipv4.ip_forward = 0"
           "net.ipv4.tcp_rfc1337 = 1"
           "net.ipv4.tcp_syncookies = 1"
@@ -631,7 +638,12 @@
       function move_tmp_to_tmpfs
       {
         # Move tmp to tmpfs
-        echo -e "tmpfs /tmp tmpfs rw,nosuid,nodev" >> "/etc/fstab"
+        if [[ -d "/tmp" ]]; then
+          echo -e "tmpfs /tmp tmpfs rw,nosuid,nodev" >> "/etc/fstab"
+
+        else
+          echo "Skipped."
+        fi
       }
 
     #
@@ -642,16 +654,36 @@
       function remount_dir_with_restrictions
       {
         # Mount tmp with noexec
-        mount --options remount,noexec /tmp || return 1
+        if [[ -d "/tmp" ]]; then
+          mount --options remount,noexec /tmp || return 1
+
+        else
+          echo "Skipped."
+        fi
 
         # Mount /proc with hidepid=2
-        mount --options remount,rw,hidepid=2 /proc || return 1
+        if [[ -d "/proc" ]]; then
+          mount --options remount,rw,hidepid=2 /proc || return 1
+
+        else
+          echo "Skipped."
+        fi
 
         # Mount /dev with noexec
-        mount --options remount,noexec /dev || return 1
+        if [[ -d "/dev" ]]; then
+          mount --options remount,noexec /dev || return 1
+
+        else
+          echo "Skipped."
+        fi
 
         # Mount /run as nodev
-        mount --options remount,nodev /run || return 1
+        if [[ -d "/run" ]]; then
+          mount --options remount,nodev /run || return 1
+
+        else
+          echo "Skipped."
+        fi
       }
 
   #
@@ -665,7 +697,7 @@
       function create_admin_user
       {
         # Create admin user
-        echo -e -n "Enter admin username: " || return 1
+        echo -e -n "${STR_SCRIPT_NAME}: Enter admin username: " || return 1
         read -r str_username || return 1
 
         if ! getent passwd $1 > /dev/null 2&>1; then
@@ -789,7 +821,7 @@
           str_packages_delim+=" ${str_package}"
         done
 
-        apt install "${str_package_delim}" || return 1
+        apt install -y "${str_package_delim}" || return 1
 
         for str_package in ${*}; do
           if [[ -z "${str_package}" ]]; then
@@ -830,8 +862,36 @@
             "debsecan" \
             "debsums" \
             "libpam-cracklib" \
-            "needrestart" \
-            "usbguard"
+            "needrestart"
+      }
+
+    #
+    # DESC:   Install USBGuard.
+    # RETURN: Return code from last statement.
+    #
+      function install_usbguard
+      {
+        install_package \
+          "usbguard" \
+          || return 1
+
+        if ! "$( command -v usbguard )" &> /dev/null ; then
+          return 1
+        fi
+
+        # In case USBGuard is setup without any whitelisted devices.
+          systemctl disable usbguard || return 1
+          systemctl stop usbguard || return 1
+
+        echo -e "${STR_SCRIPT_NAME}: Disabled USBGuard." \
+          "Please whitelist devices before re-enabling USBGuard."
+
+        echo -e "${STR_SCRIPT_NAME}: To re-enable, please run:" \
+
+        echo "\"systemctl enable usbguard\""
+        echo "\"systemctl start usbguard\""
+
+        return 0
       }
 
     #
@@ -941,6 +1001,10 @@
     #
       function usbguard_whitelist_current_devices
       {
+        if ! "$( command -v usbguard )" &> /dev/null; then
+          return 0
+        fi
+
         sudo sh -c 'usbguard generate-policy > /etc/usbguard/rules.conf'
       }
 
@@ -950,6 +1014,10 @@
     #
       function usbguard_whitelist_all_devices
       {
+        if ! "$( command -v usbguard )" &> /dev/null; then
+          return 0
+        fi
+
         for str_device_path in /sys/bus/usb/devices/*/authorized; do
           echo 1 > "${str_device_path}" || return 1
         done
