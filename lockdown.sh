@@ -805,7 +805,7 @@
     #
       function install_package
       {
-        apt update || return 1
+        # apt update || return 1
 
         local str_packages_delim=""
 
