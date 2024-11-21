@@ -805,7 +805,7 @@
     #
       function install_package
       {
-        # apt update || return 1
+        apt update || return 1
 
         local str_packages_delim=""
 
@@ -814,12 +814,20 @@
             break
           fi
 
+          echo HELLO
+
           if does_package_exist_in_cache "${str_package}"; then
             continue
           fi
 
+          echo WORLD
+
           str_packages_delim+=" ${str_package}"
         done
+
+        if [[ -z "${str_packages_delim}" ]]; then
+          return 0
+        fi
 
         apt install -y ${str_packages_delim} || return 1  # NOTE: do not place within quotes!
 
