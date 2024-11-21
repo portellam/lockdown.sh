@@ -821,7 +821,7 @@
           str_packages_delim+=" ${str_package}"
         done
 
-        apt install -y "${str_package_delim}" || return 1
+        apt install -y "${str_packages_delim}" || return 1
 
         for str_package in ${*}; do
           if [[ -z "${str_package}" ]]; then
