@@ -814,10 +814,6 @@
             break
           fi
 
-          if does_package_exist_in_cache "${str_package}"; then
-            continue
-          fi
-
           str_packages_delim+=" ${str_package}"
         done
 
