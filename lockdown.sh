@@ -585,9 +585,9 @@
           "net.ipv4.conf.default.rp_filter = 1"
           "net.ipv4.conf.default.secure_redirects = 1"
           "net.ipv4.conf.default.send_redirects = 0"
-          "net.ipv4.icmp_echo -e_ignore_broadcasts = 1"
+          "net.ipv4.icmp_echo_ignore_broadcasts = 1"
           "net.ipv4.icmp_ignore_bogus_error_responses = 1"
-          "net.ipv4.icmp_echo -e_ignore_all = 0"
+          "net.ipv4.icmp_echo_ignore_all = 0"
           "net.ipv4.ip_forward = 0"
           "net.ipv4.tcp_rfc1337 = 1"
           "net.ipv4.tcp_syncookies = 1"
@@ -695,7 +695,7 @@
       function create_admin_user
       {
         # Create admin user
-        echo -e -n "Enter admin username: " || return 1
+        echo -e -n "${STR_SCRIPT_NAME}: Enter admin username: " || return 1
         read -r str_username || return 1
 
         if ! getent passwd $1 > /dev/null 2&>1; then
@@ -881,10 +881,13 @@
           systemctl disable usbguard || return 1
           systemctl stop usbguard || return 1
 
-        echo -e "Disabled USBGuard. Please whitelist devices before re-enabling" \
-        "USBGuard. To re-enable, please run:\n" \
-        "\"systemctl enable usbguard\"\n" \
-        "\"systemctl start usbguard\"\n"
+        echo -e "${STR_SCRIPT_NAME}: Disabled USBGuard." \
+          "Please whitelist devices before re-enabling USBGuard."
+
+        echo -e "${STR_SCRIPT_NAME}: To re-enable, please run:" \
+
+        echo "\"systemctl enable usbguard\""
+        echo "\"systemctl start usbguard\""
 
         return 0
       }
