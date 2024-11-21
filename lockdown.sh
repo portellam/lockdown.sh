@@ -822,7 +822,7 @@
           str_packages_delim+=" ${str_package}"
         done
 
-        apt install -y "${str_packages_delim}" || return 1
+        apt install -y ${str_packages_delim} || return 1
 
         # FIXME
         # for str_package in ${*}; do
