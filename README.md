@@ -2,10 +2,16 @@
 <br>
 
 # lockdown.sh
-### v1.0.2 | [Download](#4-download)
+### v1.0.3
 `lockdown.sh` is a single-file zero-config shell script to be run to lockdown a
 newly installed Linux OS. `lockdown.sh` aims to set a sensible baseline which
 can be built upon for specific needs.
+
+### [Download](#4-download)
+#### View this repository on [Codeberg][01], [GitHub][02].
+[01]: https://codeberg.org/portellam/lockdown.sh
+[02]: https://github.com/portellam/lockdown.sh
+##
 
 ## Table of Contents
 - [1. Why?](#1-why)
@@ -40,8 +46,7 @@ the created admin user if an admin user is created.
   Ubuntu, Linux Mint, and Pop! OS.
 
 ### 4. Download
-- Download the Latest Release:&ensp;[Codeberg][codeberg-releases],
-[GitHub][github-releases]
+- Download the Latest Release:&ensp;[Codeberg][41], [GitHub][42]
 
 - Download the script file:
     - `wget https://www.codeberg.org/portellam/lockdown.sh/master/lockdown.sh`
@@ -56,10 +61,10 @@ the created admin user if an admin user is created.
     3. Open the `.zip` file, then extract its contents.
 
 - Clone the repository:
-    1. Open a Command Line Interface (CLI).
+    1. Open a Command Line Interface (CLI) or Terminal.
         - Open a console emulator (for Debian systems: Konsole).
-        - Open a existing console: press `CTRL` + `ALT` + `F2`, `F3`, `F4`, `F5`,  or
-        `F6`.
+        - **Linux only:** Open an existing console: press `CTRL` + `ALT` + `F2`,
+        `F3`, `F4`, `F5`, or `F6`.
             - **To return to the desktop,** press `CTRL` + `ALT` + `F7`.
             - `F1` is reserved for debug output of the Linux kernel.
             - `F7` is reserved for video output of the desktop environment.
@@ -70,8 +75,8 @@ the created admin user if an admin user is created.
         - `git clone https://www.codeberg.org/portellam/lockdown.sh`
         - `git clone https://www.github.com/portellam/lockdown.sh`
 
-[codeberg-releases]: https://codeberg.org/portellam/lockdown.sh/releases/latest
-[github-releases]:   https://github.com/portellam/lockdown.sh/releases/latest
+[41]: https://codeberg.org/portellam/lockdown.sh/releases/latest
+[42]: https://github.com/portellam/lockdown.sh/releases/latest
 
 ### 5. Usage
 Run `lockdown.sh` as root, and select which sections to run when prompted.
@@ -116,29 +121,36 @@ chmod +x ./lockdown.sh
 - usbguard: whitelist all devices.
 
 ### 7. Contact
-Did you encounter a bug? Do you need help? Please visit the **Issues page**
-([Codeberg][codeberg-issues], [GitHub][github-issues]).
+Wish to recommend a project? Do you need help? Please visit the [Issues][71] page.
 
-[codeberg-issues]: https://codeberg.org/portellam/lockdown.sh/issues
-[github-issues]:   https://github.com/portellam/lockdown.sh/issues
+[71]: https://github.com/portellam/lockdown.sh/issues
+##
 
 ### 8. References
 #### 1.
-**aide/aide**. GitHub. Accessed July 2, 2024.
-https://github.com/aide/aide.
+&ensp;&ensp;**aide/aide**. GitHub. Accessed July 2, 2024.
+
+&ensp;&ensp;&ensp;&ensp;<sup>https://github.com/aide/aide.</sup>
 
 #### 2.
-**auditd(8): Audit Daemon**. Linux man page. Accessed July 2, 2024.
-https://linux.die.net/man/8/auditd.
+&ensp;&ensp;**auditd(8): Audit Daemon**. Linux man page. Accessed July 2, 2024.
+
+&ensp;&ensp;&ensp;&ensp;<sup>https://linux.die.net/man/8/auditd.</sup>
 
 #### 3.
-**fail2ban**. fail2ban. Accessed July 2, 2024.
-https://www.fail2ban.org.
+&ensp;&ensp;**fail2ban**. fail2ban. Accessed July 2, 2024.
+
+&ensp;&ensp;&ensp;&ensp;<sup>https://www.fail2ban.org.</sup>
 
 #### 4.
-**CISOfy/lynis**. GitHub. Accessed July 2, 2024.
-https://github.com/CISOfy/lynis.
+&ensp;&ensp;**CISOfy/lynis**. GitHub. Accessed July 2, 2024.
+
+&ensp;&ensp;<sup>https://github.com/CISOfy/lynis.</sup>
 
 #### 5.
-**USBGuard/usbguard**. GitHub. Accessed July 8, 2024.
-https://github.com/USBGuard/usbguard.
+&ensp;&ensp;**USBGuard/usbguard**. GitHub. Accessed July 8, 2024.
+
+&ensp;&ensp;&ensp;&ensp;<sup>https://github.com/USBGuard/usbguard.</sup>
+##
+
+#### Click [here](#lockdownsh) to return to the top of this document.
