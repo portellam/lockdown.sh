@@ -121,7 +121,7 @@ chmod +x ./lockdown.sh
 - usbguard: whitelist all devices.
 
 ### 7. Contact
-Wish to recommend a project? Do you need help? Please visit the [Issues][71] page.
+Do you need help? Please visit the [Issues][71] page.
 
 [71]: https://github.com/portellam/lockdown.sh/issues
 ##
