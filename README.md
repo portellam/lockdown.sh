@@ -8,7 +8,7 @@ newly installed Linux OS. `lockdown.sh` aims to set a sensible baseline which
 can be built upon for specific needs.
 
 ### [Download](#4-download)
-#### View this repository on [Codeberg][01], [GitHub][02].
+#### View this repository on [Codeberg][01] or [GitHub][02].
 [01]: https://codeberg.org/portellam/lockdown.sh
 [02]: https://github.com/portellam/lockdown.sh
 ##
@@ -46,7 +46,7 @@ the created admin user if an admin user is created.
   Ubuntu, Linux Mint, and Pop! OS.
 
 ### 4. Download
-- Download the Latest Release:&ensp;[Codeberg][41], [GitHub][42]
+- Download the Latest Release:&ensp;[Codeberg][41] or [GitHub][42].
 
 - Download the script file:
     - `wget https://www.codeberg.org/portellam/lockdown.sh/master/lockdown.sh`
